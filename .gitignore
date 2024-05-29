@@ -54,7 +54,6 @@ out/
 
 # Gradle files
 .gradle/
-gradle/
 build/
 gradlew
 gradlew.bat
