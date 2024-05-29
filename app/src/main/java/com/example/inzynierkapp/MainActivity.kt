@@ -54,13 +54,22 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.CardDefaults
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.sp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.example.inzynierkapp.notebook.DefaultView
+import com.example.inzynierkapp.notebook.Note
+import com.example.inzynierkapp.notebook.NoteContent
+
 //import com.google.firebase.auth.FirebaseAuth
 //import com.google.firebase.auth.FirebaseUser
 //import com.google.firebase.auth.ktx.auth
@@ -81,12 +90,35 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    //SortAndDisplayResult(this)
-                    AppContent()//auth)
+
+                    val navController = rememberNavController()
+                    var selectedNoteId by rememberSaveable { mutableIntStateOf(0) }
+
+                    NavHost(navController, "notebook") {
+
+                        composable("login") {
+                            //SortAndDisplayResult(this)
+                            AppContent()//auth)
+                        }
+
+                        composable("notebook") {
+                            DefaultView( getAllNotes(), { id -> selectedNoteId = id.also { navController.navigate("note") } })
+                        }
+
+                        composable("note") {
+                            NoteContent(getNote(selectedNoteId), updateNote = {/* */}, Modifier.fillMaxSize() )
+                        }
+                    }
                 }
             }
         }
     }
+
+    private fun getNote(id: Int): Note = Note(id, "title $id")
+
+    private fun getAllNotes(): List<Note> = (0..10).map { Note(it, "title $it") }
+
+}
 
     @Preview(showBackground = true)
     @Composable
@@ -97,14 +129,6 @@ class MainActivity : ComponentActivity() {
             delay(2000)
             showSplashScreen = false
         }
-        var text = "To tylko na chwilę gdy firebase jest zakomentowany"
-        Column{
-            Text(text)
-            Button({ "Nie uda ci się! HAHAHA!".also { text = it } }, Modifier.size(100.dp)){
-                Text("Kliknij by przejsc dalej")
-            }
-        }
-
 
 
 //        Crossfade(targetState = showSplashScreen, label = "") { isSplashScreenVisible ->
@@ -117,7 +141,7 @@ class MainActivity : ComponentActivity() {
 //            }
 //        }
     }
-}
+//}
 
 @Composable
 fun SortAndDisplayResult(context: Context) {
