@@ -66,15 +66,122 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.PrimaryKey
 import com.example.inzynierkapp.notebook.DefaultView
 import com.example.inzynierkapp.notebook.Note
 import com.example.inzynierkapp.notebook.NoteContent
+import java.util.Date
+import androidx.room.Database
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.Query
 
 //import com.google.firebase.auth.FirebaseAuth
 //import com.google.firebase.auth.FirebaseUser
 //import com.google.firebase.auth.ktx.auth
 //import com.google.firebase.firestore.FirebaseFirestore
 //import com.google.firebase.ktx.Firebase
+
+
+
+@Entity(tableName = "notes")
+data class Note(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val name: String,
+    val content: String,
+    val data: Date,
+)
+
+@Entity(tableName = "questions", foreignKeys = [ForeignKey(
+    entity = User::class,
+    parentColumns = arrayOf("id"),
+    childColumns = arrayOf("noteId"),
+    onDelete = ForeignKey.CASCADE
+)]
+)
+data class Questions(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val name: String,
+    val content: String,
+    val ans: String,
+    val data: Date,
+)
+@Entity(tableName = "summaries", foreignKeys = [ForeignKey(
+    entity = Note::class,
+    parentColumns = arrayOf("id"),
+    childColumns = arrayOf("noteId"),
+    onDelete = ForeignKey.CASCADE
+)]
+)
+data class Summary(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val name: String,
+    val content: String,
+    val data: Date,
+)
+
+
+
+
+@Dao
+interface NoteDao {
+    @Insert
+    suspend fun insert(note: com.example.inzynierkapp.Note)
+
+    @Query("SELECT * FROM notes")
+    suspend fun getAllUsers(): List<User>
+}
+
+@Dao
+interface SummaryDao {
+    @Insert
+    suspend fun insert(summary: Summary)
+
+    @Query("SELECT * FROM summaries")
+    suspend fun getAllUsers(): List<User>
+}
+
+interface QuestionDao {
+    @Insert
+    suspend fun insert(questions: Questions)
+
+    @Query("SELECT * FROM questions")
+    suspend fun getAllUsers(): List<User>
+}
+
+
+
+
+@Database(entities = [User::class], version = 1)
+abstract class AppDatabase : RoomDatabase() {
+    abstract fun userDao(): NoteDao
+
+    companion object {
+        @Volatile
+        private var INSTANCE: AppDatabase? = null
+
+        fun getDatabase(context: Context): AppDatabase {
+            return INSTANCE ?: synchronized(this) {
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    AppDatabase::class.java,
+                    "app_database"
+                ).build()
+                INSTANCE = instance
+                instance
+            }
+        }
+    }
+}
+
+
+
+
+
 
 
 class MainActivity : ComponentActivity() {
