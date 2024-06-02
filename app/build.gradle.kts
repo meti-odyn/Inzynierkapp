@@ -92,6 +92,8 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.camera.core)
+    implementation("androidx.compose.material:material-icons-extended:1.0.5")
 //    implementation(libs.firebase.auth)
 //    implementation(libs.firebase.firestore)
 //    implementation(libs.firebase.database)
