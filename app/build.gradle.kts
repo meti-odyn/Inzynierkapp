@@ -94,6 +94,8 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.camera.core)
     implementation("androidx.compose.material:material-icons-extended:1.0.5")
+    implementation(libs.androidx.room.common)
+    implementation(libs.androidx.room.runtime.android)
 //    implementation(libs.firebase.auth)
 //    implementation(libs.firebase.firestore)
 //    implementation(libs.firebase.database)
