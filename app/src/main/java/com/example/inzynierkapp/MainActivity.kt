@@ -461,7 +461,7 @@ private fun onSignInError(errorMessage: String) {
 
 @Composable
 fun MainScreen(user: FirebaseUser, onSignOut: () -> Unit, onSignIn: () -> Unit) {
-    var userProfile by rememberSaveable { mutableStateOf<User?>(null) }
+    var userProfile by remember { mutableStateOf<User?>(null) }
 
     // Fetch user profile from Firestore
     LaunchedEffect(user.uid) {
