@@ -78,16 +78,14 @@ class MainActivity : ComponentActivity() {
                         composable("notebook") {
                             DefaultView( getAllNotes(), { id -> selectedNoteId = id.also { navController.navigate("note") } })
                         }
-                        composable("summary/{noteId}") { backStackEntry ->
-                            val noteId = backStackEntry.arguments?.getString("noteId")?.toInt()
-                            val note = getNote(noteId!!)
-                            SummaryScreen(note = note, onBack = { navController.popBackStack() })
+                        composable("summary") {
+                            SummaryScreen(getNote(selectedNoteId),{ navController.popBackStack() })
                         }
                         composable("note") {
                             NoteContent(
                                 getNote(selectedNoteId),
                                 updateNote = {/* */},
-                                navigateToSummary = { navController.navigate("summary/${selectedNoteId}")},
+                                navigateToSummary = { navController.navigate("summary")},
                                 Modifier.fillMaxSize() )
                         }
 
