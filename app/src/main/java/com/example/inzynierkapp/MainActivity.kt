@@ -55,14 +55,17 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.inzynierkapp.notebook.AppDatabase
 import com.example.inzynierkapp.notebook.DefaultView
 import com.example.inzynierkapp.notebook.SummaryScreen
-import com.example.inzynierkapp.notebook.Note
+import com.example.inzynierkapp.notebook.NoteDao
 import com.example.inzynierkapp.notebook.NoteRecord
 import com.example.inzynierkapp.notebook.NoteContent
+import com.example.inzynierkapp.notebook.Note
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -74,6 +77,7 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.launch
 
 
 class MainActivity : ComponentActivity() {
@@ -114,10 +118,27 @@ class MainActivity : ComponentActivity() {
                             val note = getNote(noteId!!)
                             SummaryScreen(note = note, onBack = { navController.popBackStack() })
                         }
+
                         composable("note") {
+                            val context = LocalContext.current
+                            val noteDao = AppDatabase.getDatabase(context).noteDao()
+                            val note = getNote(selectedNoteId) // Assuming this returns a Note object
                             NoteContent(
-                                getNote(selectedNoteId),
-                                updateNote = {/* */},
+                                note,
+                                updateNote = { updatedNote ->
+                                    // Convert updatedNote from Note to NoteRecord
+                                    val updatedNoteRecord = NoteRecord(
+                                        id = updatedNote.id,
+                                        name = updatedNote.title,
+                                        content = updatedNote.text,
+                                        data = updatedNote.creationDate
+                                    )
+                                    // This is a suspend function, so it should be called from a coroutine scope
+                                    // You can use the lifecycleScope provided by the LifecycleOwner
+                                    lifecycleScope.launch {
+                                        noteDao.update(updatedNoteRecord)
+                                    }
+                                },
                                 navigateToSummary = { navController.navigate("summary/${selectedNoteId}")},
                                 Modifier.fillMaxSize() )
                         }

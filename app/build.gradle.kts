@@ -2,11 +2,20 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.chaquo.python")
+    id("org.jetbrains.kotlin.kapt")
     alias(libs.plugins.googleGmsGoogleServices)
 }
 
 android {
 
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
     namespace = "com.example.inzynierkapp"
     compileSdk = 34
 
@@ -111,5 +120,10 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+    implementation("androidx.room:room-runtime:2.4.1")
+    kapt("androidx.room:room-compiler:2.4.1")
+    implementation("androidx.room:room-ktx:2.4.1")
+    testImplementation("androidx.room:room-testing:2.4.1")
+
 
 }
