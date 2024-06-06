@@ -52,6 +52,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.Color
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.chaquo.python.Python
+import com.chaquo.python.android.AndroidPlatform
+import kotlin.concurrent.thread
 
 @Composable
 fun SummaryScreen(note: Note, onBack: () -> Unit) {
@@ -246,3 +249,28 @@ fun saveInCalendar(note: Note, context: Context) {
         }
     }
 }
+
+@Composable
+fun SortAndDisplayResult(context: Context) {
+    val text =
+        "The term NLP can refer to two different things: Natural Language Processing (NLP): This is a field of computer science and artificial intelligence concerned with enabling computers to understand and manipulate human language. NLP techniques are used in a wide range of applications, including: " +
+                "Machine translation: translating text from one language to another " +
+                "Speech recognition: converting spoken words into text " +
+                "Text summarization: creating a concise summary of a longer piece of text " +
+                "Chatbots: computer programs that can simulate conversation with human users " +
+                "Sentiment analysis: determining the emotional tone of a piece of text " +
+                "Neuro-linguistic programming (NLP): This is a controversial approach to communication, personal development, and psychotherapy that is not generally accepted by the scientific community. NLP claims that there is a connection between neurological processes, language, and acquired behavioral patterns, and that these can be changed to achieve specific goals in life. However, there is no scientific evidence to support these claims, and NLP is often criticized for being pseudoscience." +
+                "\nIt is important to be aware of the difference between these two meanings of NLP, as they are completely unrelated fields."
+    var output by remember { mutableStateOf<String?>(null) }
+    thread {
+        if (!Python.isStarted()) Python.start(AndroidPlatform(context))
+        val py = Python.getInstance()
+        val module = py.getModule("skrypt")
+        output = module.callAttr("generate_summary", text).toString()
+    }
+    Text(
+        text = output ?: "Posortowane liczby: jeszce nie!",
+        modifier = Modifier.fillMaxSize(),
+    )
+}
+
