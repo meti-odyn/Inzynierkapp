@@ -2,12 +2,9 @@ package com.example.inzynierkapp
 
 import android.content.Context
 import android.os.Bundle
-import android.window.SplashScreen
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.contextaware.ContextAware
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -23,14 +20,11 @@ import com.chaquo.python.PyObject
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.example.inzynierkapp.ui.theme.InzynierkappTheme
-import kotlinx.coroutines.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import kotlin.concurrent.thread
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -45,8 +39,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.TextField
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -57,9 +49,6 @@ import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -69,20 +58,11 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.PrimaryKey
 import com.example.inzynierkapp.notebook.DefaultView
 import com.example.inzynierkapp.notebook.SummaryScreen
 import com.example.inzynierkapp.notebook.Note
+import com.example.inzynierkapp.notebook.NoteRecord
 import com.example.inzynierkapp.notebook.NoteContent
-import java.util.Date
-import androidx.room.Database
-import androidx.room.Room
-import androidx.room.RoomDatabase
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.Query
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -94,103 +74,6 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
-
-
-
-@Entity(tableName = "notes")
-data class Note(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val name: String,
-    val content: String,
-    val data: Date,
-)
-
-@Entity(tableName = "questions", foreignKeys = [ForeignKey(
-    entity = User::class,
-    parentColumns = arrayOf("id"),
-    childColumns = arrayOf("noteId"),
-    onDelete = ForeignKey.CASCADE
-)]
-)
-data class Questions(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val name: String,
-    val content: String,
-    val ans: String,
-    val data: Date,
-)
-@Entity(tableName = "summaries", foreignKeys = [ForeignKey(
-    entity = Note::class,
-    parentColumns = arrayOf("id"),
-    childColumns = arrayOf("noteId"),
-    onDelete = ForeignKey.CASCADE
-)]
-)
-data class Summary(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val name: String,
-    val content: String,
-    val data: Date,
-)
-
-
-
-
-@Dao
-interface NoteDao {
-    @Insert
-    suspend fun insert(note: com.example.inzynierkapp.Note)
-
-    @Query("SELECT * FROM notes")
-    suspend fun getAllUsers(): List<User>
-}
-
-@Dao
-interface SummaryDao {
-    @Insert
-    suspend fun insert(summary: Summary)
-
-    @Query("SELECT * FROM summaries")
-    suspend fun getAllUsers(): List<User>
-}
-
-interface QuestionDao {
-    @Insert
-    suspend fun insert(questions: Questions)
-
-    @Query("SELECT * FROM questions")
-    suspend fun getAllUsers(): List<User>
-}
-
-
-
-
-@Database(entities = [User::class], version = 1)
-abstract class AppDatabase : RoomDatabase() {
-    abstract fun userDao(): NoteDao
-
-    companion object {
-        @Volatile
-        private var INSTANCE: AppDatabase? = null
-
-        fun getDatabase(context: Context): AppDatabase {
-            return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    AppDatabase::class.java,
-                    "app_database"
-                ).build()
-                INSTANCE = instance
-                instance
-            }
-        }
-    }
-}
-
-
-
-
-
 
 
 class MainActivity : ComponentActivity() {
@@ -216,11 +99,12 @@ class MainActivity : ComponentActivity() {
                 ) {
                     val navController = rememberNavController()
                     var selectedNoteId by rememberSaveable { mutableIntStateOf(0) }
+                    var userProfile by rememberSaveable { mutableStateOf<FirebaseUser?>(null) }
 
                     NavHost(navController, "login") {
 
                         composable("login") {
-                            AppContent(auth)
+                            AppContent(auth) { user: FirebaseUser -> userProfile = user. also{ navController.navigate("notebook") }}
                         }
 
                         composable("notebook") {
@@ -279,14 +163,14 @@ class MainActivity : ComponentActivity() {
 
 
     @Composable
-    fun AppContent(auth: FirebaseAuth) {
+    fun AppContent(auth: FirebaseAuth, onSignedIn: (FirebaseUser) -> Unit) {
         var showSplashScreen by remember { mutableStateOf(true) }
 
         LaunchedEffect(showSplashScreen) {
             delay(2000)
             showSplashScreen = false
         }
-        AuthOrMainScreen(auth)
+        AuthOrMainScreen(auth, onSignedIn)
 
 
 //        Crossfade(targetState = showSplashScreen, label = "") { isSplashScreenVisible ->
@@ -374,19 +258,12 @@ fun SplashScreen(navigateToAuthOrMainScreen: () -> Unit) {
 
 
 @Composable
-fun AuthOrMainScreen(auth: FirebaseAuth) {
-    var user by remember { mutableStateOf(auth.currentUser) }
-
+fun AuthOrMainScreen(auth: FirebaseAuth, onSignedIn: (FirebaseUser) -> Unit) {
+    var user by rememberSaveable { mutableStateOf(auth.currentUser) }
     if (user == null) {
-        AuthScreen { signedInUser -> user = signedInUser }
+        AuthScreen(onSignedIn)
     } else {
-        MainScreen(
-            user = user!!,  // Pass the user information to MainScreen
-            onSignOut = {
-                auth.signOut()
-                user = null
-            }
-        )
+        MainScreen(user!!,{auth.signOut(). also{ user = null} }) { onSignedIn(user!!) }
     }
 }
 
@@ -509,11 +386,9 @@ fun AuthScreen(onSignedIn: (FirebaseUser) -> Unit) {
                 Button(
                     onClick = {
                         if (isSignIn) {
-                            signIn(Firebase.auth, email, password,
-                                onSignedIn = { signedInUser -> onSignedIn(signedInUser) }, /*TODO: PRZEJŚCIE DO NOTEBOOKA DANEGO UZYTKOWNIKA*/
-                                onSignInError = { errorMessage -> myErrorMessage = errorMessage }
-                            )
-                        } else {
+                            signIn(Firebase.auth, email, password, onSignedIn) { errorMessage -> myErrorMessage = errorMessage }
+                        }
+                        else {
                             signUp(Firebase.auth, email, password, firstName, lastName) { signedInUser -> onSignedIn(signedInUser) }
                         }
                     },
@@ -586,7 +461,7 @@ private fun onSignInError(errorMessage: String) {
 
 
 @Composable
-fun MainScreen(user: FirebaseUser, onSignOut: () -> Unit) {
+fun MainScreen(user: FirebaseUser, onSignOut: () -> Unit, onSignIn: () -> Unit) {
     var userProfile by rememberSaveable { mutableStateOf<User?>(null) }
 
     // Fetch user profile from Firestore
@@ -624,16 +499,18 @@ fun MainScreen(user: FirebaseUser, onSignOut: () -> Unit) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(
-            onClick = {
-                onSignOut()
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
+        Button(onSignIn, modifier = Modifier.fillMaxWidth().height(50.dp)
+        ) {
+            Text("Go to my Notes")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(onSignOut, modifier = Modifier.fillMaxWidth().height(50.dp)
         ) {
             Text("Sign Out")
         }
+
     }
 }
 
@@ -695,12 +572,6 @@ private fun signUp(
 
             }
         }
-}
-
-//@Preview(showBackground = true)
-@Composable
-fun PreviewAuthOrMainScreen() {
-    AuthOrMainScreen(Firebase.auth)
 }
 
 
