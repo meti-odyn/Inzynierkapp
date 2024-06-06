@@ -12,6 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -47,11 +48,22 @@ import kotlinx.coroutines.launch
 import java.util.Date
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.Color
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
+@Composable
+fun SummaryScreen(note: Note, onBack: () -> Unit) {
+    Column(modifier = Modifier.padding(16.dp)) {
+        Text(text = "Summary of ${note.title}", style = MaterialTheme.typography.titleLarge)
+        Text(text = note.text, style = MaterialTheme.typography.displaySmall)
+        Button(onClick = { onBack() }) {
+            Text("Go Back")
+        }
+    }
+}
 @Composable
 fun DefaultView(notes: List<Note>, onclick: (Int) -> Unit, modifier: Modifier = Modifier) {
     Box(modifier = Modifier.fillMaxSize()) {
@@ -93,18 +105,73 @@ fun NotePreview (note: Note, onclick: () -> Unit, modifier: Modifier = Modifier,
     }
 }
 
-@Composable
-fun NoteContent (note: Note, updateNote: (Note) -> Unit, modifier: Modifier = Modifier) {
-    val REQUEST_CODE_CAMERA = 1
-    val context = LocalContext.current
+//@Composable
+//fun NoteContent (note: Note, updateNote: (Note) -> Unit, navigateToSummary: () -> Unit, modifier: Modifier = Modifier) {
+//    val REQUEST_CODE_CAMERA = 1
+//    val context = LocalContext.current
+////    val onCameraClick = {
+////        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+////        if (intent.resolveActivity(context.packageManager) != null) {
+////            context.startActivity(intent)
+////        } else {
+////            Toast.makeText(context, "No camera app found", Toast.LENGTH_SHORT).show()
+////        }
+////    }
+//
 //    val onCameraClick = {
-//        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-//        if (intent.resolveActivity(context.packageManager) != null) {
-//            context.startActivity(intent)
+//        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+//            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+//            if (intent.resolveActivity(context.packageManager) != null) {
+//                context.startActivity(intent)
+//            } else {
+//                Toast.makeText(context, "No camera app found", Toast.LENGTH_SHORT).show()
+//            }
 //        } else {
-//            Toast.makeText(context, "No camera app found", Toast.LENGTH_SHORT).show()
+//            ActivityCompat.requestPermissions(context as Activity, arrayOf(Manifest.permission.CAMERA), REQUEST_CODE_CAMERA)
 //        }
 //    }
+//    var title by remember { mutableStateOf(note.title) }
+//    var text by remember { mutableStateOf(note.text) }
+//    LazyColumn(modifier.fillMaxSize().padding(4.dp)) {
+//
+//        item {
+//            TextField(title, { newValue -> title = newValue. also { updateNote(Note(note.id, title, text)) } }, Modifier.fillMaxWidth(),
+//                textStyle = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold))
+//        }
+//
+//        item {
+//            TextField(text, { newValue -> text = newValue. also { updateNote(Note(note.id, title, text)) } }, Modifier.fillMaxSize())
+//        }
+//
+//        item {
+//            Button(onClick = { saveInCalendar(note, context) }) {
+//                Text("Save in Calendar")
+//            }
+//    }
+//        item{
+//        FloatingActionButton(
+//            onClick = onCameraClick,
+//            modifier = Modifier
+//                .padding(16.dp)
+//        ) {
+//            Icon(
+//                imageVector = Icons.Default.Camera,
+//                contentDescription = "Camera Button"
+//            )
+//        }
+//
+//            }
+//        item{
+//            Button(onClick = { navigateToSummary() }) {
+//                Text("Summary")
+//            }}
+//
+//}
+//}
+@Composable
+fun NoteContent(note: Note, updateNote: (Note) -> Unit, navigateToSummary: () -> Unit, modifier: Modifier = Modifier) {
+    val REQUEST_CODE_CAMERA = 1
+    val context = LocalContext.current
 
     val onCameraClick = {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
@@ -132,23 +199,30 @@ fun NoteContent (note: Note, updateNote: (Note) -> Unit, modifier: Modifier = Mo
         }
 
         item {
-            Button(onClick = { saveInCalendar(note, context) }) {
-                Text("Save in Calendar")
+            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                Button(onClick = { saveInCalendar(note, context) }) {
+                    Text("Save in Calendar")
+                }
+                Button(onClick = { navigateToSummary() }) {
+                    Text("Summary")
+                }
             }
-    }
-        item{
-        FloatingActionButton(
-            onClick = onCameraClick,
-            modifier = Modifier
-                .padding(16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Camera,
-                contentDescription = "Camera Button"
-            )
-        }}
+        }
 
-}
+        item {
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+                FloatingActionButton(
+                    onClick = onCameraClick,
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Camera,
+                        contentDescription = "Camera Button"
+                    )
+                }
+            }
+        }
+    }
 }
 fun saveInCalendar(note: Note, context: Context) {
     GlobalScope.launch {

@@ -73,6 +73,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 import com.example.inzynierkapp.notebook.DefaultView
+import com.example.inzynierkapp.notebook.SummaryScreen
 import com.example.inzynierkapp.notebook.Note
 import com.example.inzynierkapp.notebook.NoteContent
 import java.util.Date
@@ -225,10 +226,19 @@ class MainActivity : ComponentActivity() {
                         composable("notebook") {
                             DefaultView( getAllNotes(), { id -> selectedNoteId = id.also { navController.navigate("note") } })
                         }
-
-                        composable("note") {
-                            NoteContent(getNote(selectedNoteId), updateNote = {/* */}, Modifier.fillMaxSize() )
+                        composable("summary/{noteId}") { backStackEntry ->
+                            val noteId = backStackEntry.arguments?.getString("noteId")?.toInt()
+                            val note = getNote(noteId!!)
+                            SummaryScreen(note = note, onBack = { navController.popBackStack() })
                         }
+                        composable("note") {
+                            NoteContent(
+                                getNote(selectedNoteId),
+                                updateNote = {/* */},
+                                navigateToSummary = { navController.navigate("summary/${selectedNoteId}")},
+                                Modifier.fillMaxSize() )
+                        }
+
                      }
                 }
             }
