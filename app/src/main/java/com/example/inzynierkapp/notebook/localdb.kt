@@ -1,17 +1,17 @@
 package com.example.inzynierkapp.notebook
 
 import android.content.Context
+import androidx.room.Dao
+import androidx.room.Database
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Insert
 import androidx.room.PrimaryKey
-import java.util.Date
-import androidx.room.Database
+import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.Query
-import com.example.inzynierkapp.User
+import com.example.inzynierkapp.login.User
+import java.util.Date
 
 
 @Entity(tableName = "notes")
