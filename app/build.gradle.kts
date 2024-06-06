@@ -3,7 +3,6 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.chaquo.python")
     alias(libs.plugins.googleGmsGoogleServices)
-//    alias(libs.plugins.googleGmsGoogleServices)
 }
 
 android {

@@ -99,12 +99,11 @@ class MainActivity : ComponentActivity() {
                 ) {
                     val navController = rememberNavController()
                     var selectedNoteId by rememberSaveable { mutableIntStateOf(0) }
-                    var userProfile by rememberSaveable { mutableStateOf<FirebaseUser?>(null) }
 
                     NavHost(navController, "login") {
 
                         composable("login") {
-                            AppContent(auth) { user: FirebaseUser -> userProfile = user. also{ navController.navigate("notebook") }}
+                            AppContent(auth) { navController.navigate("notebook") }
                         }
 
                         composable("notebook") {
@@ -163,7 +162,7 @@ class MainActivity : ComponentActivity() {
 
 
     @Composable
-    fun AppContent(auth: FirebaseAuth, onSignedIn: (FirebaseUser) -> Unit) {
+    fun AppContent(auth: FirebaseAuth, onSignedIn: () -> Unit) {
         var showSplashScreen by remember { mutableStateOf(true) }
 
         LaunchedEffect(showSplashScreen) {
@@ -258,18 +257,18 @@ fun SplashScreen(navigateToAuthOrMainScreen: () -> Unit) {
 
 
 @Composable
-fun AuthOrMainScreen(auth: FirebaseAuth, onSignedIn: (FirebaseUser) -> Unit) {
-    var user by rememberSaveable { mutableStateOf(auth.currentUser) }
-    if (user == null) {
+fun AuthOrMainScreen(auth: FirebaseAuth, onSignedIn: () -> Unit) {
+    //var user by rememberSaveable { mutableStateOf(auth.currentUser) }
+    if (auth.currentUser == null) {
         AuthScreen(onSignedIn)
     } else {
-        MainScreen(user!!,{auth.signOut(). also{ user = null} }) { onSignedIn(user!!) }
+        MainScreen(auth.currentUser!!, { auth.signOut() } , onSignedIn)
     }
 }
 
 
 @Composable
-fun AuthScreen(onSignedIn: (FirebaseUser) -> Unit) {
+fun AuthScreen(onSignedIn: () -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var firstName by remember { mutableStateOf("") }
@@ -389,7 +388,7 @@ fun AuthScreen(onSignedIn: (FirebaseUser) -> Unit) {
                             signIn(Firebase.auth, email, password, onSignedIn) { errorMessage -> myErrorMessage = errorMessage }
                         }
                         else {
-                            signUp(Firebase.auth, email, password, firstName, lastName) { signedInUser -> onSignedIn(signedInUser) }
+                            signUp(Firebase.auth, email, password, firstName, lastName, onSignedIn)
                         }
                     },
                     modifier = Modifier
@@ -520,14 +519,14 @@ private fun signIn(
     auth: FirebaseAuth,
     email: String,
     password: String,
-    onSignedIn: (FirebaseUser) -> Unit,
+    onSignedIn: () -> Unit,
     onSignInError: (String) -> Unit // Callback for sign-in error
 ) {
     auth.signInWithEmailAndPassword(email, password)
         .addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 val user = auth.currentUser
-                onSignedIn(user!!)
+                onSignedIn()
             } else {
                 // Handle sign-in failure
                 onSignInError("Invalid email or password")
@@ -542,7 +541,7 @@ private fun signUp(
     password: String,
     firstName: String,
     lastName: String,
-    onSignedIn: (FirebaseUser) -> Unit
+    onSignedIn: () -> Unit
 ) {
     auth.createUserWithEmailAndPassword(email, password)
         .addOnCompleteListener { task ->
@@ -561,7 +560,7 @@ private fun signUp(
                     .document(user!!.uid)
                     .set(userProfile)
                     .addOnSuccessListener {
-                        onSignedIn(user)
+                        onSignedIn()
                     }
                     .addOnFailureListener {
                         //handle exception
