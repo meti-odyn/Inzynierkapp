@@ -215,22 +215,21 @@ class MainActivity : ComponentActivity() {
                 ) {
                     val navController = rememberNavController()
                     var selectedNoteId by rememberSaveable { mutableIntStateOf(0) }
-                    AppContent(auth)
-                    //NavHost(navController, "notebook") {
-//
-//                        composable("login") {
-//                            //SortAndDisplayResult(this)
-//                            AppContent()//auth)
-//                        }
-//
-//                        composable("notebook") {
-//                            DefaultView( getAllNotes(), { id -> selectedNoteId = id.also { navController.navigate("note") } })
-//                        }
-//
-//                        composable("note") {
-//                            NoteContent(getNote(selectedNoteId), updateNote = {/* */}, Modifier.fillMaxSize() )
-//                        }
-                    // }
+
+                    NavHost(navController, "login") {
+
+                        composable("login") {
+                            AppContent(auth)
+                        }
+
+                        composable("notebook") {
+                            DefaultView( getAllNotes(), { id -> selectedNoteId = id.also { navController.navigate("note") } })
+                        }
+
+                        composable("note") {
+                            NoteContent(getNote(selectedNoteId), updateNote = {/* */}, Modifier.fillMaxSize() )
+                        }
+                     }
                 }
             }
         }
@@ -501,7 +500,7 @@ fun AuthScreen(onSignedIn: (FirebaseUser) -> Unit) {
                     onClick = {
                         if (isSignIn) {
                             signIn(Firebase.auth, email, password,
-                                onSignedIn = { signedInUser -> onSignedIn(signedInUser) },
+                                onSignedIn = { signedInUser -> onSignedIn(signedInUser) }, /*TODO: PRZEJŚCIE DO NOTEBOOKA DANEGO UZYTKOWNIKA*/
                                 onSignInError = { errorMessage -> myErrorMessage = errorMessage }
                             )
                         } else {
@@ -578,7 +577,7 @@ private fun onSignInError(errorMessage: String) {
 
 @Composable
 fun MainScreen(user: FirebaseUser, onSignOut: () -> Unit) {
-    val userProfile = remember { mutableStateOf<User?>(null) }
+    var userProfile by rememberSaveable { mutableStateOf<User?>(null) }
 
     // Fetch user profile from Firestore
     LaunchedEffect(user.uid) {
@@ -591,7 +590,7 @@ fun MainScreen(user: FirebaseUser, onSignOut: () -> Unit) {
                     val firstName = document.getString("firstName")
                     val lastName = document.getString("lastName")
 
-                    userProfile.value = User(firstName, lastName, user.email ?: "")
+                    userProfile = User(firstName, lastName, user.email ?: "")
                 } else {
                     // Handle the case where the document doesn't exist
                 }
@@ -609,7 +608,7 @@ fun MainScreen(user: FirebaseUser, onSignOut: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        userProfile.value?.let {
+        userProfile?.let {
             Text("Welcome, ${it.firstName} ${it.lastName}!")
         }
 

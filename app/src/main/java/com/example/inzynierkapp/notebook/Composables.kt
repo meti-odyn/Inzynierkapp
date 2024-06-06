@@ -52,42 +52,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
-
-//@Composable
-//fun DefaultView(notes: List<Note>, onclick: (Int) -> Unit, modifier: Modifier = Modifier) {
-////    Column(modifier.padding(12.dp)) {
-////        Button( { /* onclick(insertEmptyNote()) */ }, Modifier.width(116.dp).padding(8.dp))  {
-////           // Text("Create new note")
-//
-//        //
-//    //
-//    // }
-//    Box(modifier = Modifier.fillMaxSize()) {
-//    Column(modifier.padding(12.dp)) {
-//        Text("Your notes:", fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(8.dp))
-//
-//
-//        LazyVerticalGrid( GridCells.Adaptive(minSize = 80.dp), modifier,
-//            verticalArrangement = Arrangement.spacedBy(8.dp),
-//            horizontalArrangement = Arrangement.spacedBy(8.dp)
-//        ) {
-//            items(notes.size) { index ->
-//                NotePreview(notes[index], { onclick(notes[index].id) })
-//            }
-//        }
-//        Surface(
-//            modifier = Modifier
-//                .size(56.dp)
-//                .align(Alignment.BottomEnd)
-//                .padding(16.dp),
-//            shape = CircleShape,
-//            color = Color(0xFF000080)
-//        ){
-//            IconButton(onClick = { /* onclick(insertEmptyNote()) */ }, Modifier.padding(8.dp)) {
-//                Icon(Icons.Default.Add, contentDescription = "Create new note")
-//            } }
-//    }
-//}}
 @Composable
 fun DefaultView(notes: List<Note>, onclick: (Int) -> Unit, modifier: Modifier = Modifier) {
     Box(modifier = Modifier.fillMaxSize()) {
@@ -209,14 +173,3 @@ fun saveInCalendar(note: Note, context: Context) {
         }
     }
 }
-
-//fun saveInCalender(note: Note, context: Context) {
-//    val intent = Intent(Intent.ACTION_INSERT).apply {
-//        data = CalendarContract.Events.CONTENT_URI
-//        putExtra(CalendarContract.Events.TITLE, note.title)
-//        putExtra(CalendarContract.Events.DESCRIPTION, note.text)
-//        putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, note.creationDate.time)
-//        putExtra(CalendarContract.EXTRA_EVENT_END_TIME, note.creationDate.time + 60 * 60 * 1000)
-//    }
-//    context.startActivity(intent)
-//}
