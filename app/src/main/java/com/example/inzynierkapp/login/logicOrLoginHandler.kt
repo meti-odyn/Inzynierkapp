@@ -1,7 +1,12 @@
 package com.example.inzynierkapp.login
 
+import android.app.Activity
+import com.example.inzynierkapp.MainActivity
+import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
+import perfetto.protos.AndroidStartupMetric
 
 data class User(
     val firstName: String?,
@@ -27,6 +32,8 @@ fun signIn(
             }
         }
 }
+
+
 
 
 fun signUp(

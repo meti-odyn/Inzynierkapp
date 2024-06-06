@@ -51,6 +51,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.inzynierkapp.MainActivity
 import com.example.inzynierkapp.R
 import com.google.firebase.auth.FirebaseAuth
@@ -89,14 +90,14 @@ fun AppContent(auth: FirebaseAuth, onSignedIn: () -> Unit) {
 fun AuthOrMainScreen(auth: FirebaseAuth, onSignedIn: () -> Unit) {
     //var user by rememberSaveable { mutableStateOf(auth.currentUser) }
     if (auth.currentUser == null) {
-        AuthScreen(onSignedIn)
+        AuthScreen(auth, onSignedIn)
     } else {
         MainScreen(auth.currentUser!!, { auth.signOut() } , onSignedIn)
     }
 }
 
 @Composable
-fun AuthScreen(onSignedIn: () -> Unit) {
+fun AuthScreen(auth: FirebaseAuth,onSignedIn: () -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var firstName by remember { mutableStateOf("") }
