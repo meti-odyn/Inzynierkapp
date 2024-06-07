@@ -3,6 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.chaquo.python")
     alias(libs.plugins.googleGmsGoogleServices)
+    //id("kotlin-kapt")
 }
 
 android {
@@ -22,7 +23,7 @@ android {
             useSupportLibrary = true
             ndk {
                 // On Apple silicon, you can omit x86_64.
-                abiFilters += listOf("arm64-v8a", "x86_64")
+                abiFilters += listOf("arm64-v8a", "x86_64", "armeabi-v7a", "arm64-v8a", "x86")
             }
         }
 
@@ -112,5 +113,8 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+    implementation("androidx.room:room-runtime:2.6.1")
+    //kapt "androidx.room:room-compiler:2.4.1"
+    annotationProcessor("androidx.room:room-compiler:2.6.1")
 
 }
