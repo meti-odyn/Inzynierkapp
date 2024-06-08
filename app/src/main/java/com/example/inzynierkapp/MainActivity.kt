@@ -1,15 +1,18 @@
 package com.example.inzynierkapp
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -17,7 +20,6 @@ import androidx.navigation.compose.rememberNavController
 import com.chaquo.python.PyObject
 import com.example.inzynierkapp.login.AppContent
 import com.example.inzynierkapp.notebook.DefaultView
-import com.example.inzynierkapp.notebook.Note
 import com.example.inzynierkapp.notebook.NoteContent
 import com.example.inzynierkapp.notebook.SummaryScreen
 import com.example.inzynierkapp.ui.theme.InzynierkappTheme
@@ -29,7 +31,14 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-
+import com.example.inzynierkapp.note.*
+import com.example.inzynierkapp.notebook.AppDatabase
+import kotlinx.coroutines.Dispatchers
+import java.util.Date
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     private lateinit var module: PyObject
@@ -37,7 +46,7 @@ class MainActivity : ComponentActivity() {
     lateinit var googleSignInClient: GoogleSignInClient
     private lateinit var navController: NavHostController
 
-    private val NoteDao: Note? = null
+    private lateinit var noteDao: NoteDao
 
     val googleSignInLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -53,6 +62,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val db = AppDatabase.getDatabase(this)
+        this.noteDao = db.noteDao;
 
         //Graph.provide(this)
 
@@ -81,19 +93,21 @@ class MainActivity : ComponentActivity() {
                         }
 
                         composable("notebook") {
-                            DefaultView( getAllNotes(), { id -> selectedNoteId = id.also { navController.navigate("note") } })
+                            DefaultView(noteDao,
+                                { id ->
+                                    selectedNoteId = id.also { navController.navigate("note") }
+                                })
                         }
-                        composable("summary/{noteId}") { backStackEntry ->
-                            val noteId = backStackEntry.arguments?.getString("noteId")?.toInt()
-                            val note = getNote(noteId!!)
-                            SummaryScreen(note = note, onBack = { navController.popBackStack() })
-                        }
+//                        composable("summary/{noteId}") { backStackEntry ->
+//                            SummaryScreen(note = note, onBack = { navController.popBackStack() })
+//                        }
                         composable("note") {
                             NoteContent(
                                 getNote(selectedNoteId),
-                                updateNote = {/* */},
-                                navigateToSummary = { navController.navigate("summary/${selectedNoteId}")},
-                                Modifier.fillMaxSize() )
+                                updateNote = {/* */ },
+                                navigateToSummary = { navController.navigate("summary/${selectedNoteId}") },
+                                Modifier.fillMaxSize()
+                            )
                         }
 
                     }
@@ -117,10 +131,22 @@ class MainActivity : ComponentActivity() {
     }
 
 
+    private fun initDB() {
+        val db = AppDatabase.getDatabase(this)
+        val testNote: NoteModel = NoteModel(1, "test", "test", Date())
+        val noteDao = db.noteDao.insert(testNote)
+        //val summaryDao = db.summaryDao
+        //val questionDao = db.questionDao
+    }
 
+    private fun getNote(id: Int): NoteModel = NoteModel(id, "title $id", "content $id", Date())
 
-    private fun getNote(id: Int): Note = Note(id, "title $id")
-
-    private fun getAllNotes(): List<Note> = (0..10).map { Note(it, "title $it") }
+//    private suspend fun getAllNotes(): List<NoteModel> {
+//        return withContext(Dispatchers.IO) {
+//            val notes = noteDao.getAllNotes().first()
+//            Log.d("MainActivity", "Retrieved notes: $notes")
+//            notes
+//        }
+//    }
 
 }
