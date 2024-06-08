@@ -2,6 +2,7 @@ package com.example.inzynierkapp.notebook
 
 import android.Manifest
 import android.app.Activity
+import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -56,6 +57,7 @@ import kotlinx.coroutines.launch
 import java.util.Date
 import kotlin.concurrent.thread
 
+
 @Composable
 fun SummaryScreen(note: Note, onBack: () -> Unit) {
     Column(modifier = Modifier.padding(16.dp)) {
@@ -68,6 +70,7 @@ fun SummaryScreen(note: Note, onBack: () -> Unit) {
 }
 @Composable
 fun DefaultView(notes: List<Note>, onclick: (Int) -> Unit, modifier: Modifier = Modifier) {
+    lateinit var context: Context
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier.padding(12.dp)) {
             Text("Your notes:", fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(8.dp))
@@ -90,12 +93,83 @@ fun DefaultView(notes: List<Note>, onclick: (Int) -> Unit, modifier: Modifier = 
             shape = CircleShape,
             color = Color(0xFFA1A1E9) // Kolor granatowy
         ) {
-            IconButton(onClick = { /* onclick(insertEmptyNote()) */ }, Modifier.padding(12.dp)) { // Zwiększony padding wewnątrz IconButton
+            IconButton(onClick = { onclick(insertEmptyNote(context)) }, Modifier.padding(12.dp)) { // Zwiększony padding wewnątrz IconButton
                 Icon(Icons.Default.Add, contentDescription = "Create new note", Modifier.size(30.dp)) // Zwiększony rozmiar ikony
             }
         }
     }
 }
+
+
+fun insertEmptyNote(
+    context: Context
+): Int {
+    val noteDao: NoteDao = AppDatabase.getDatabase(context).noteDao
+    var newNoteId: Int = 0
+    val newNote = NoteRecord(name = "new note", content = "", data = Date())
+    //noteDao.insert(newNote)
+
+    newNoteId = noteDao.getNewNoteID()
+    return newNoteId
+}
+//@Composable
+//fun insertEmptyNote(
+//    viewModel: NoteViewModel,
+//    onNoteInserted: (Int) -> Unit
+//): Int {
+//    var title by remember { mutableStateOf("") }
+//    var content by remember { mutableStateOf("") }
+//    val context = LocalContext.current
+//    val noteId = remember { mutableStateOf<Int?>(null) }
+//
+//    Column(
+//        modifier = Modifier
+//            .fillMaxSize()
+//            .padding(16.dp),
+//        verticalArrangement = Arrangement.Center
+//    ) {
+//        TextField(
+//            value = title,
+//            onValueChange = { title = it },
+//            label = { Text("Title") },
+//            modifier = Modifier.fillMaxWidth()
+//
+//        )
+//
+//        Spacer(modifier = Modifier.height(8.dp))
+//
+//        TextField(
+//            value = content,
+//            onValueChange = { content = it },
+//            label = { Text("Content") },
+//            modifier = Modifier.fillMaxWidth()
+//        )
+//
+//        Spacer(modifier = Modifier.height(16.dp))
+//
+//        Button(
+//            onClick = {
+//                if (title.isNotBlank() && content.isNotBlank()) {
+//                    val note = NoteRecord(name = title, content = content, data = Date())
+//                    viewModel.insert(note)
+//                    val noteId = viewModel.insert(note)
+//                    title = ""
+//                    content = ""
+//                    Toast.makeText(context, "Note saved", Toast.LENGTH_SHORT).show()
+//                    onNoteInserted(noteId.value ?: 0)
+//                } else {
+//                    Toast.makeText(context, "Title and Content cannot be empty", Toast.LENGTH_SHORT).show()
+//                }
+//            },
+//            modifier = Modifier.align(Alignment.End)
+//        ) {
+//            Text("Save")
+//        }
+//    }
+//
+//    return 0
+//}
+
 @Composable
 fun NotePreview (note: Note, onclick: () -> Unit, modifier: Modifier = Modifier, headLength: Int = 50) {
 
@@ -189,7 +263,10 @@ fun NoteContent(note: Note, updateNote: (Note) -> Unit, navigateToSummary: () ->
     }
     var title by remember { mutableStateOf(note.title) }
     var text by remember { mutableStateOf(note.text) }
-    LazyColumn(modifier.fillMaxSize().padding(4.dp)) {
+    LazyColumn(
+        modifier
+            .fillMaxSize()
+            .padding(4.dp)) {
 
         item {
             TextField(title, { newValue -> title = newValue. also { updateNote(Note(note.id, title, text)) } }, Modifier.fillMaxWidth(),
@@ -274,3 +351,14 @@ fun SortAndDisplayResult(context: Context) {
     )
 }
 
+
+class InitDb : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        appDatabase = AppDatabase.getDatabase(this)
+    }
+
+    companion object {
+        var appDatabase: AppDatabase? = null
+    }
+}

@@ -7,25 +7,24 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.ui.Modifier
-import com.chaquo.python.PyObject
-import com.example.inzynierkapp.ui.theme.InzynierkappTheme
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.chaquo.python.PyObject
 import com.example.inzynierkapp.login.AppContent
 import com.example.inzynierkapp.notebook.DefaultView
-import com.example.inzynierkapp.notebook.SummaryScreen
 import com.example.inzynierkapp.notebook.Note
 import com.example.inzynierkapp.notebook.NoteContent
+import com.example.inzynierkapp.notebook.SummaryScreen
+import com.example.inzynierkapp.ui.theme.InzynierkappTheme
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
-
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
@@ -37,6 +36,8 @@ class MainActivity : ComponentActivity() {
     private val auth: FirebaseAuth by lazy { Firebase.auth }
     lateinit var googleSignInClient: GoogleSignInClient
     private lateinit var navController: NavHostController
+
+    private val NoteDao: Note? = null
 
     val googleSignInLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -53,12 +54,16 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        //Graph.provide(this)
+
         // Configure Google Sign-In
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(getString(R.string.default_web_client_id))
             .requestEmail()
             .build()
         googleSignInClient = GoogleSignIn.getClient(this, gso)
+
+
 
         setContent {
             InzynierkappTheme {
@@ -93,6 +98,8 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+        //Graph.provide(this)
+
     }
 
     private fun firebaseAuthWithGoogle(idToken: String) {
@@ -106,6 +113,8 @@ class MainActivity : ComponentActivity() {
                 }
             }
     }
+
+
 
 
     private fun getNote(id: Int): Note = Note(id, "title $id")
