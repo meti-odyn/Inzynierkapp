@@ -39,7 +39,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-
+import kotlinx.coroutines.withContext
 class MainActivity : ComponentActivity() {
     private lateinit var module: PyObject
     private val auth: FirebaseAuth by lazy { Firebase.auth }
@@ -101,13 +101,28 @@ class MainActivity : ComponentActivity() {
 //                        composable("summary/{noteId}") { backStackEntry ->
 //                            SummaryScreen(note = note, onBack = { navController.popBackStack() })
 //                        }
+
                         composable("note") {
-                            NoteContent(
-                                getNote(selectedNoteId),
-                                updateNote = {/* */ },
-                                navigateToSummary = { navController.navigate("summary/${selectedNoteId}") },
-                                Modifier.fillMaxSize()
-                            )
+//                            NoteContent(
+//                                getNote(selectedNoteId),
+//                                updateNote = {/* */ },
+//                                navigateToSummary = { navController.navigate("summary/${selectedNoteId}") },
+//                                Modifier.fillMaxSize()
+                           // )
+                            var note by remember { mutableStateOf<NoteModel?>(null) }
+
+                            LaunchedEffect(selectedNoteId) {
+                                note = getNote(selectedNoteId)
+                            }
+
+                            note?.let {
+                                NoteContent(
+                                    it,
+                                    updateNote = {/* */ },
+                                    navigateToSummary = { navController.navigate("summary/${selectedNoteId}") },
+                                    Modifier.fillMaxSize()
+                                )
+                            }
                         }
 
                     }
@@ -138,8 +153,12 @@ class MainActivity : ComponentActivity() {
         //val summaryDao = db.summaryDao
         //val questionDao = db.questionDao
     }
-
-    private fun getNote(id: Int): NoteModel = NoteModel(id, "title $id", "content $id", Date())
+    private suspend fun getNote(id: Int): NoteModel {
+        return withContext(Dispatchers.IO) {
+            noteDao.getNote(id)
+        }
+    }
+    //private fun getNote(id: Int): NoteModel = NoteModel(id, "title $id", "content $id", Date())
 
 //    private suspend fun getAllNotes(): List<NoteModel> {
 //        return withContext(Dispatchers.IO) {

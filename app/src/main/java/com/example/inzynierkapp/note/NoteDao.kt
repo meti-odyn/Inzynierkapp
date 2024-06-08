@@ -21,4 +21,7 @@ interface NoteDao {
 
     @Query("SELECT id FROM notes ORDER BY date DESC LIMIT 1")
     fun getNewNoteID(): Int
+
+    @Query("SELECT * FROM notes WHERE id = :id")
+    suspend fun getNote(id: Int): NoteModel
 }

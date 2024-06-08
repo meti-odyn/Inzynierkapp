@@ -55,10 +55,12 @@ import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.example.inzynierkapp.note.NoteDao
 import com.example.inzynierkapp.note.NoteModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Date
 import kotlin.concurrent.thread
 
@@ -113,8 +115,19 @@ fun DefaultView(notesProvider: NoteDao, onclick: (Int) -> Unit, modifier: Modifi
             shape = CircleShape,
             color = Color(0xFFA1A1E9) // Kolor granatowy
         ) {
+//            IconButton(
+//                onClick = { onclick(insertEmptyNote(context)) },
+//                Modifier.padding(12.dp)
+//            ) { // Zwiększony padding wewnątrz IconButton
+            val coroutineScope = rememberCoroutineScope()
             IconButton(
-                onClick = { onclick(insertEmptyNote(context)) },
+                onClick = {
+                    coroutineScope.launch {
+                        insertEmptyNote(context)
+                        notes.value = notesProvider.getAllNotes().last()
+                        // Handle the newNoteId here
+                    }
+                },
                 Modifier.padding(12.dp)
             ) { // Zwiększony padding wewnątrz IconButton
                 Icon(
@@ -127,18 +140,26 @@ fun DefaultView(notesProvider: NoteDao, onclick: (Int) -> Unit, modifier: Modifi
     }
 }
 
-
-fun insertEmptyNote(
-    context: Context
-): Int {
+suspend fun insertEmptyNote(context: Context) {
     val noteDao: NoteDao = AppDatabase.getDatabase(context).noteDao
-    var newNoteId: Int = 0
     val newNote = NoteModel(name = "new note", content = "", date = Date())
-    //noteDao.insert(newNote)
-
-    newNoteId = noteDao.getNewNoteID()
-    return newNoteId
+    withContext(Dispatchers.IO) {
+        noteDao.insert(newNote)
+    }
 }
+
+//
+//fun insertEmptyNote(
+//    context: Context
+//): Int {
+//    val noteDao: NoteDao = AppDatabase.getDatabase(context).noteDao
+//    var newNoteId: Int = 0
+//    val newNote = NoteModel(name = "new note", content = "", date = Date())
+//    //noteDao.insert(newNote)
+//
+//    newNoteId = noteDao.getNewNoteID()
+//    return newNoteId
+//}
 //@Composable
 //fun insertEmptyNote(
 //    viewModel: NoteViewModel,
