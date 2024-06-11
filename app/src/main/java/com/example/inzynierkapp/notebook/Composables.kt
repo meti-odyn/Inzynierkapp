@@ -40,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,12 +67,30 @@ import kotlin.concurrent.thread
 
 
 @Composable
-fun SummaryScreen(note: NoteModel, onBack: () -> Unit) {
-    Column(modifier = Modifier.padding(16.dp)) {
-        Text(text = "Summary of ${note.name}", style = MaterialTheme.typography.titleLarge)
-        note.content?.let { Text(text = it, style = MaterialTheme.typography.displaySmall) }
-        Button(onClick = { onBack() }) {
-            Text("Go Back")
+fun SummaryScreen(note: NoteModel, onBack: () -> Unit, modifier: Modifier = Modifier) {
+    LazyColumn(modifier.padding(16.dp)) {
+        item {
+            Column {
+                Text(text = "Summary of ${note.name}", style = MaterialTheme.typography.titleLarge)
+                var output by rememberSaveable { mutableStateOf<String>("") }
+                val context = LocalContext.current
+
+                if (note.content.orEmpty().length >= 150) {
+                    output = "generating..."
+                    //LaunchedEffect(key1 = note)
+                    thread{
+                        if (!Python.isStarted()) Python.start(AndroidPlatform(context))
+                        val py = Python.getInstance()
+                        val module = py.getModule("skrypt")
+                        output = module.callAttr("generate_summary", note.content!!).toString()
+                    }
+                } else output = "data is too short to generate summary, it has to have at least 150 characters!"
+
+                Text(output, style = MaterialTheme.typography.bodySmall)
+                Button(onClick = { onBack() }) {
+                    Text("Go Back")
+                }
+            }
         }
     }
 }
@@ -409,6 +428,9 @@ fun saveInCalendar(note: NoteModel, context: Context) {
         }
     }
 }
+@Composable
+fun WaitingScreen(modifier: Modifier =Modifier, message: String = "loading") = Card (modifier) { Text (message) }
+
 
 @Composable
 fun SortAndDisplayResult(context: Context) {
