@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Camera
@@ -74,7 +75,7 @@ fun SummaryScreen(note: NoteModel, onBack: () -> Unit, modifier: Modifier = Modi
     var output by rememberSaveable { mutableStateOf<String>("") }
     val context = LocalContext.current
     val applicationCoroutineScope = rememberCoroutineScope()
-
+    var enableWaitingScreen by rememberSaveable { mutableStateOf(true) }
 
     LaunchedEffect(note.content) { // Use LifecycleOwner and note.content as keys
         if (note.content.orEmpty().length >= 150) {
@@ -87,6 +88,7 @@ fun SummaryScreen(note: NoteModel, onBack: () -> Unit, modifier: Modifier = Modi
                     return@withContext module.callAttr("generate_summary", note.content!!).toString()
                 }
                 output = summary
+                enableWaitingScreen = false
             }
         } else {
             output = "Data is too short to generate summary, it has to have at least 150 characters!"
@@ -96,8 +98,18 @@ fun SummaryScreen(note: NoteModel, onBack: () -> Unit, modifier: Modifier = Modi
     LazyColumn(modifier.padding(16.dp)) {
         item {
             Column {
-                Text(text = "Summary of ${note.name}", style = MaterialTheme.typography.titleLarge)
-                Text(output, style = MaterialTheme.typography.bodySmall)
+                SelectionContainer {
+                    Column(Modifier.padding(12.dp)) {
+                        Text("Summary of ${note.name}", Modifier.padding(0.dp,12.dp),
+                            style = MaterialTheme.typography.titleLarge)
+
+                        if (enableWaitingScreen) {
+                            WaitingScreen(Modifier.padding(8.dp),output)
+                        } else {
+                            Text(output, style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+                }
                 Button(onClick = { onBack() }) {
                     Text("Go Back")
                 }
