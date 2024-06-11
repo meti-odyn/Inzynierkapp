@@ -9,9 +9,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -50,6 +52,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var navController: NavHostController
 
     private lateinit var noteDao: NoteDao
+    private var userEmail: String? = null
 
     val googleSignInLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -67,9 +70,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val db = AppDatabase.getDatabase(this)
-        this.noteDao = db.noteDao;
-
-        //Graph.provide(this)
+        this.noteDao = db.noteDao
 
         // Configure Google Sign-In
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -77,9 +78,6 @@ class MainActivity : ComponentActivity() {
             .requestEmail()
             .build()
         googleSignInClient = GoogleSignIn.getClient(this, gso)
-
-
-
         setContent {
             InzynierkappTheme {
                 Surface(
@@ -89,20 +87,24 @@ class MainActivity : ComponentActivity() {
                     navController = rememberNavController()
                     var selectedNoteId by rememberSaveable { mutableIntStateOf(0) }
 
-                    NavHost(navController, "login") {
+                    NavHost(navController, startDestination = "login") {
 
                         composable("login") {
-                            AppContent(auth) { navController.navigate("notebook") }
+                            AppContent(auth) { navController.navigate("notebook")
+                                userEmail = auth.currentUser?.email}
                         }
 
                         composable("notebook") {
-                            DefaultView(noteDao, { id -> selectedNoteId = id.also { navController.navigate("note") } })
+                            DefaultView(noteDao, userEmail ?: "", { id ->
+                                selectedNoteId = id
+                                navController.navigate("note")
+                            })
                         }
 
                         composable("summary") {
                             var note by remember { mutableStateOf<NoteModel?>(null) }
                             LaunchedEffect(selectedNoteId) {
-                                note = getNote(selectedNoteId)
+                                note = getNoteByIdAndEmail(selectedNoteId, userEmail!!)
                             }
                             if (note != null) {
                                 SummaryScreen(note!!, { navController.popBackStack() })
@@ -113,33 +115,30 @@ class MainActivity : ComponentActivity() {
                         }
 
                         composable("note") {
-//                            NoteContent(
-//                                getNote(selectedNoteId),
-//                                updateNote = {/* */ },
-//                                navigateToSummary = { navController.navigate("summary") },
-//                                Modifier.fillMaxSize()
-                           // )
                             var note by remember { mutableStateOf<NoteModel?>(null) }
-
                             LaunchedEffect(selectedNoteId) {
-                                note = getNote(selectedNoteId)
+                                userEmail?.let {
+                                    note = getNoteByIdAndEmail(selectedNoteId, it)
+                                }
                             }
 
                             note?.let {
                                 NoteContent(
-                                    it, {note -> updateNote(note)},
+                                    note = it,
+                                    updateNote = { updatedNote -> updateNote(updatedNote) },
                                     navigateToSummary = { navController.navigate("summary") },
-                                    Modifier.fillMaxSize()
+                                    userEmail = userEmail ?: "",
+                                    modifier = Modifier.fillMaxSize()
                                 )
+                            } ?: run {
+                                // Show loading or error state if note is null
+                                Text("Loading...", Modifier.fillMaxSize(), textAlign = TextAlign.Center)
                             }
                         }
-
                     }
                 }
             }
         }
-        //Graph.provide(this)
-
     }
 
     private fun firebaseAuthWithGoogle(idToken: String) {
@@ -147,12 +146,14 @@ class MainActivity : ComponentActivity() {
         auth.signInWithCredential(credential)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
+                    userEmail = auth.currentUser?.email
                     navController.navigate("notebook")
                 } else {
                     // Handle login failure
                 }
             }
     }
+
 
 
     private fun initDB() {
@@ -162,9 +163,9 @@ class MainActivity : ComponentActivity() {
         //val summaryDao = db.summaryDao
         //val questionDao = db.questionDao
     }
-    private suspend fun getNote(id: Int): NoteModel {
+    private suspend fun getNoteByIdAndEmail(id: Int, email: String): NoteModel? {
         return withContext(Dispatchers.IO) {
-            noteDao.getNote(id)
+            noteDao.getNoteByIdAndEmail(id, email)
         }
     }
 
