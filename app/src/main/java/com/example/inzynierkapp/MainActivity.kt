@@ -33,6 +33,7 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.example.inzynierkapp.note.*
 import com.example.inzynierkapp.notebook.AppDatabase
+import com.example.inzynierkapp.notebook.WaitingScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import java.util.Date
@@ -97,9 +98,19 @@ class MainActivity : ComponentActivity() {
                         composable("notebook") {
                             DefaultView(noteDao, { id -> selectedNoteId = id.also { navController.navigate("note") } })
                         }
-//                        composable("summary") { backStackEntry ->
-//                            SummaryScreen(note = note, onBack = { navController.popBackStack() })
-//                        }
+
+                        composable("summary") {
+                            var note by remember { mutableStateOf<NoteModel?>(null) }
+                            LaunchedEffect(selectedNoteId) {
+                                note = getNote(selectedNoteId)
+                            }
+                            if (note != null) {
+                                SummaryScreen(note!!, { navController.popBackStack() })
+                            } else {
+                                WaitingScreen(Modifier.fillMaxSize())
+                            }
+
+                        }
 
                         composable("note") {
 //                            NoteContent(
