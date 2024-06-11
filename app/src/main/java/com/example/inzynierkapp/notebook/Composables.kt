@@ -56,6 +56,7 @@ import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.example.inzynierkapp.note.NoteDao
 import com.example.inzynierkapp.note.NoteModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -215,6 +216,7 @@ fun NoteContent(
     note: NoteModel,
     updateNote: (NoteModel) -> Unit,
     navigateToSummary: () -> Unit,
+    userEmail: String,
     modifier: Modifier = Modifier
 ) {
     val REQUEST_CODE_CAMERA = 1
@@ -241,6 +243,8 @@ fun NoteContent(
         }
     }
 
+
+
     var title by remember { mutableStateOf(note.name) }
     var text by remember { mutableStateOf(note.content) }
 
@@ -254,7 +258,7 @@ fun NoteContent(
                 value = title ?: "",
                 onValueChange = { newValue ->
                     title = newValue
-                    updateNote(NoteModel(note.id, title, text, note.date))
+                    updateNote(NoteModel(note.id, title, text, note.date, userEmail))
                 },
                 modifier = Modifier.fillMaxWidth(),
                 textStyle = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold)
@@ -267,12 +271,14 @@ fun NoteContent(
                     value = it,
                     onValueChange = { newValue ->
                         text = newValue
-                        updateNote(NoteModel(note.id, title, text, note.date))
+                        updateNote(NoteModel(note.id, title, text, note.date, userEmail))
                     },
                     modifier = Modifier.fillMaxSize()
                 )
             }
         }
+
+
 
         item {
             Row(
@@ -329,6 +335,9 @@ fun saveInCalendar(note: NoteModel, context: Context) {
 }
 @Composable
 fun WaitingScreen(modifier: Modifier =Modifier, message: String = "loading") = Card (modifier) { Text (message) }
+
+
+
 
 
 @Composable

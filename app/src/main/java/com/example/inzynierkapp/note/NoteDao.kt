@@ -25,4 +25,7 @@ interface NoteDao {
     @Query("SELECT id FROM notes WHERE userEmail = :email ORDER BY date DESC LIMIT 1")
     fun getNewNoteID(email: String): Int?
 
+    @Delete
+    suspend fun delete(note: NoteModel)
+
 }

@@ -127,6 +127,7 @@ class MainActivity : ComponentActivity() {
                                     note = it,
                                     updateNote = { updatedNote -> updateNote(updatedNote) },
                                     navigateToSummary = { navController.navigate("summary") },
+                                    userEmail = userEmail ?: "",
                                     modifier = Modifier.fillMaxSize()
                                 )
                             } ?: run {
