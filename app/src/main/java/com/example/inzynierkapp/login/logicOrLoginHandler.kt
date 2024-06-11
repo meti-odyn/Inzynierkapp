@@ -42,8 +42,14 @@ fun signUp(
     password: String,
     firstName: String,
     lastName: String,
-    onSignedIn: () -> Unit
+    onSignedIn: () -> Unit,
+    onSignUpFailed: (String) -> Unit
 ) {
+    if (password.length < 6) {
+        onSignUpFailed("Password should be at least 6 characters")
+        return
+    }
+
     auth.createUserWithEmailAndPassword(email, password)
         .addOnCompleteListener { task ->
             if (task.isSuccessful) {
@@ -64,15 +70,14 @@ fun signUp(
                         onSignedIn()
                     }
                     .addOnFailureListener {
-                        //handle exception
-
+                        onSignUpFailed("Failed to create user profile in Firestore")
                     }
             } else {
-                // Handle sign-up failure
-
+                onSignUpFailed(task.exception?.message ?: "Sign-up failed")
             }
         }
 }
+
 
 // Function to handle sign-in errors
 fun onSignInError(errorMessage: String) {

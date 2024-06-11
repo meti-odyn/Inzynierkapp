@@ -217,7 +217,7 @@ fun AuthScreen(auth: FirebaseAuth,onSignedIn: () -> Unit) {
                             signIn(Firebase.auth, email, password, onSignedIn) { errorMessage -> myErrorMessage = errorMessage }
                         }
                         else {
-                            signUp(Firebase.auth, email, password, firstName, lastName, onSignedIn)
+                            signUp(Firebase.auth, email, password, firstName, lastName, onSignedIn){ errorMessage -> myErrorMessage = errorMessage }
                         }
                     },
                     modifier = Modifier
