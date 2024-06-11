@@ -445,3 +445,9 @@ class InitDb : Application() {
         var appDatabase: AppDatabase? = null
     }
 }
+
+@Composable
+fun NoConnectionScreen() {
+
+    Text(text = "Brak połączenia z internetem")
+}

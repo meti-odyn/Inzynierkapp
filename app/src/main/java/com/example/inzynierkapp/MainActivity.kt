@@ -1,5 +1,9 @@
 package com.example.inzynierkapp
 
+import android.annotation.SuppressLint
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -33,6 +37,7 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.example.inzynierkapp.note.*
 import com.example.inzynierkapp.notebook.AppDatabase
+import com.example.inzynierkapp.notebook.NoConnectionScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import java.util.Date
@@ -64,72 +69,87 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (isNetworkAvailable(this)) {
+            val db = AppDatabase.getDatabase(this)
+            this.noteDao = db.noteDao;
 
-        val db = AppDatabase.getDatabase(this)
-        this.noteDao = db.noteDao;
+            //Graph.provide(this)
 
-        //Graph.provide(this)
-
-        // Configure Google Sign-In
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(getString(R.string.default_web_client_id))
-            .requestEmail()
-            .build()
-        googleSignInClient = GoogleSignIn.getClient(this, gso)
+            // Configure Google Sign-In
+            val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build()
+            googleSignInClient = GoogleSignIn.getClient(this, gso)
 
 
 
-        setContent {
-            InzynierkappTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    navController = rememberNavController()
-                    var selectedNoteId by rememberSaveable { mutableIntStateOf(0) }
+            setContent {
+                InzynierkappTheme {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        navController = rememberNavController()
+                        var selectedNoteId by rememberSaveable { mutableIntStateOf(0) }
 
-                    NavHost(navController, "login") {
+                        NavHost(navController, "login") {
 
-                        composable("login") {
-                            AppContent(auth) { navController.navigate("notebook") }
-                        }
-
-                        composable("notebook") {
-                            DefaultView(noteDao, { id -> selectedNoteId = id.also { navController.navigate("note") } })
-                        }
-//                        composable("summary") { backStackEntry ->
-//                            SummaryScreen(note = note, onBack = { navController.popBackStack() })
-//                        }
-
-                        composable("note") {
-//                            NoteContent(
-//                                getNote(selectedNoteId),
-//                                updateNote = {/* */ },
-//                                navigateToSummary = { navController.navigate("summary") },
-//                                Modifier.fillMaxSize()
-                           // )
-                            var note by remember { mutableStateOf<NoteModel?>(null) }
-
-                            LaunchedEffect(selectedNoteId) {
-                                note = getNote(selectedNoteId)
+                            composable("login") {
+                                AppContent(auth) { navController.navigate("notebook") }
                             }
 
-                            note?.let {
-                                NoteContent(
-                                    it, {note -> updateNote(note)},
-                                    navigateToSummary = { navController.navigate("summary") },
-                                    Modifier.fillMaxSize()
-                                )
+                            composable("notebook") {
+                                DefaultView(noteDao, { id -> selectedNoteId = id.also { navController.navigate("note") } })
+                            }
+    //                        composable("summary") { backStackEntry ->
+    //                            SummaryScreen(note = note, onBack = { navController.popBackStack() })
+    //                        }
+
+                            composable("note") {
+    //                            NoteContent(
+    //                                getNote(selectedNoteId),
+    //                                updateNote = {/* */ },
+    //                                navigateToSummary = { navController.navigate("summary") },
+    //                                Modifier.fillMaxSize()
+                               // )
+                                var note by remember { mutableStateOf<NoteModel?>(null) }
+
+                                LaunchedEffect(selectedNoteId) {
+                                    note = getNote(selectedNoteId)
+                                }
+
+                                note?.let {
+                                    NoteContent(
+                                        it, { note -> updateNote(note) },
+                                        navigateToSummary = { navController.navigate("summary") },
+                                        Modifier.fillMaxSize()
+                                    )
+                                }
                             }
                         }
-
                     }
                 }
             }
         }
-        //Graph.provide(this)
+        else {
+            setContent {
+                InzynierkappTheme {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        NoConnectionScreen()
+                    }
+                }
+            }
+
+        }
 
     }
+        //Graph.provide(this)
+
+
 
     private fun firebaseAuthWithGoogle(idToken: String) {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
@@ -163,6 +183,18 @@ class MainActivity : ComponentActivity() {
             withContext(Dispatchers.IO) {
                 noteDao.update(note)
             }
+        }
+    }
+
+    @SuppressLint("ServiceCast")
+    private fun isNetworkAvailable(context: Context): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val activeNetwork = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return when {
+            activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
+            activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
+            else -> false
         }
     }
 
