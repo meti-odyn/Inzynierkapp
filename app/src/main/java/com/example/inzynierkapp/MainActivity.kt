@@ -1,42 +1,52 @@
 package com.example.inzynierkapp
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.ui.Modifier
-import com.chaquo.python.PyObject
-import com.example.inzynierkapp.ui.theme.InzynierkappTheme
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Modifier
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.chaquo.python.PyObject
 import com.example.inzynierkapp.login.AppContent
 import com.example.inzynierkapp.notebook.DefaultView
-import com.example.inzynierkapp.notebook.SummaryScreen
-import com.example.inzynierkapp.notebook.Note
 import com.example.inzynierkapp.notebook.NoteContent
+import com.example.inzynierkapp.notebook.SummaryScreen
+import com.example.inzynierkapp.ui.theme.InzynierkappTheme
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
-
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-
-
+import com.example.inzynierkapp.note.*
+import com.example.inzynierkapp.notebook.AppDatabase
+import kotlinx.coroutines.Dispatchers
+import java.util.Date
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withContext
 class MainActivity : ComponentActivity() {
     private lateinit var module: PyObject
     private val auth: FirebaseAuth by lazy { Firebase.auth }
     lateinit var googleSignInClient: GoogleSignInClient
     private lateinit var navController: NavHostController
+
+    private lateinit var noteDao: NoteDao
 
     val googleSignInLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -53,12 +63,19 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val db = AppDatabase.getDatabase(this)
+        this.noteDao = db.noteDao;
+
+        //Graph.provide(this)
+
         // Configure Google Sign-In
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(getString(R.string.default_web_client_id))
             .requestEmail()
             .build()
         googleSignInClient = GoogleSignIn.getClient(this, gso)
+
+
 
         setContent {
             InzynierkappTheme {
@@ -76,23 +93,44 @@ class MainActivity : ComponentActivity() {
                         }
 
                         composable("notebook") {
-                            DefaultView( getAllNotes(), { id -> selectedNoteId = id.also { navController.navigate("note") } })
+                            DefaultView(noteDao,
+                                { id ->
+                                    selectedNoteId = id.also { navController.navigate("note") }
+                                })
                         }
-                        composable("summary") {
-                            SummaryScreen(getNote(selectedNoteId),{ navController.popBackStack() })
-                        }
+//                        composable("summary") { backStackEntry ->
+//                            SummaryScreen(note = note, onBack = { navController.popBackStack() })
+//                        }
+
                         composable("note") {
-                            NoteContent(
-                                getNote(selectedNoteId),
-                                updateNote = {/* */},
-                                navigateToSummary = { navController.navigate("summary")},
-                                Modifier.fillMaxSize() )
+//                            NoteContent(
+//                                getNote(selectedNoteId),
+//                                updateNote = {/* */ },
+//                                navigateToSummary = { navController.navigate("summary") },
+//                                Modifier.fillMaxSize()
+                           // )
+                            var note by remember { mutableStateOf<NoteModel?>(null) }
+
+                            LaunchedEffect(selectedNoteId) {
+                                note = getNote(selectedNoteId)
+                            }
+
+                            note?.let {
+                                NoteContent(
+                                    it,
+                                    updateNote = {/* */ },
+                                    navigateToSummary = { navController.navigate("summary/${selectedNoteId}") },
+                                    Modifier.fillMaxSize()
+                                )
+                            }
                         }
 
                     }
                 }
             }
         }
+        //Graph.provide(this)
+
     }
 
     private fun firebaseAuthWithGoogle(idToken: String) {
@@ -108,8 +146,26 @@ class MainActivity : ComponentActivity() {
     }
 
 
-    private fun getNote(id: Int): Note = Note(id, "title $id")
+    private fun initDB() {
+        val db = AppDatabase.getDatabase(this)
+        val testNote: NoteModel = NoteModel(1, "test", "test", Date())
+        val noteDao = db.noteDao.insert(testNote)
+        //val summaryDao = db.summaryDao
+        //val questionDao = db.questionDao
+    }
+    private suspend fun getNote(id: Int): NoteModel {
+        return withContext(Dispatchers.IO) {
+            noteDao.getNote(id)
+        }
+    }
+    //private fun getNote(id: Int): NoteModel = NoteModel(id, "title $id", "content $id", Date())
 
-    private fun getAllNotes(): List<Note> = (0..10).map { Note(it, "title $it") }
+//    private suspend fun getAllNotes(): List<NoteModel> {
+//        return withContext(Dispatchers.IO) {
+//            val notes = noteDao.getAllNotes().first()
+//            Log.d("MainActivity", "Retrieved notes: $notes")
+//            notes
+//        }
+//    }
 
 }

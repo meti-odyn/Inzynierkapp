@@ -1,8 +1,11 @@
+import org.jetbrains.kotlin.kapt3.base.Kapt.kapt
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.chaquo.python")
     alias(libs.plugins.googleGmsGoogleServices)
+    kotlin("kapt")
 }
 
 android {
@@ -22,7 +25,7 @@ android {
             useSupportLibrary = true
             ndk {
                 // On Apple silicon, you can omit x86_64.
-                abiFilters += listOf("arm64-v8a", "x86_64")
+                abiFilters += listOf("arm64-v8a", "x86_64", "armeabi-v7a", "arm64-v8a", "x86")
             }
         }
 
@@ -38,11 +41,12 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+//        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
@@ -105,6 +109,7 @@ dependencies {
     implementation("com.google.android.gms:play-services-auth:21.2.0")
     implementation(libs.androidx.benchmark.macro)
     implementation(libs.firebase.crashlytics.buildtools)
+    implementation(libs.androidx.appcompat)
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
@@ -112,5 +117,11 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    implementation("androidx.room:room-runtime:2.6.1")
+    "kapt"("androidx.room:room-compiler:2.6.1")
+//    annotationProcessor("androidx.room:room-compiler:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1") // Add Room Kotlin extensions
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android") // Add Coroutines
 
 }
