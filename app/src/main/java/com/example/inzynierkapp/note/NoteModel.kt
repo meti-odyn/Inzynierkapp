@@ -9,7 +9,7 @@ import java.util.Date
 data class NoteModel(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val name: String = "",
+    val name: String? = "",
     val content: String?,
     val date: Date = Date(),
 )

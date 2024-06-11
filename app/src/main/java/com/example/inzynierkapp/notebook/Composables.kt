@@ -83,8 +83,7 @@ fun DefaultView(notesProvider: NoteDao, onclick: (Int) -> Unit, modifier: Modifi
     val scope = rememberCoroutineScope();
     val notes = remember { mutableStateOf(listOf<NoteModel>()) }
     LaunchedEffect(scope) {
-        notes.value = notesProvider
-            .getAllNotes().last();
+        notesProvider.getAllNotes().collect { notes.value = it }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -228,8 +227,8 @@ fun NotePreview(
 
     Card(modifier.clickable { onclick() }) {
         Column(Modifier.padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(note.name, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Text(note.content!!.substring(0, minOf(headLength, note.content.length)))
+            Text(note.name ?: "" , fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text(note.content?.substring(0, minOf(headLength, note.content.length)) ?: "")
         }
     }
 }
@@ -337,7 +336,7 @@ fun NoteContent(
 
         item {
             TextField(
-                title,
+                title ?: "",
                 { newValue ->
                     title = newValue.also { updateNote(NoteModel(note.id, title, text, note.date)) }
                 },
