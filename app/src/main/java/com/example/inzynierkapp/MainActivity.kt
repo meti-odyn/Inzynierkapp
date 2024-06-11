@@ -126,8 +126,10 @@ class MainActivity : ComponentActivity() {
                                 NoteContent(
                                     note = it,
                                     updateNote = { updatedNote -> updateNote(updatedNote) },
+                                    deleteNote = { noteToDelete -> deleteNote(noteToDelete) },
                                     navigateToSummary = { navController.navigate("summary") },
                                     userEmail = userEmail ?: "",
+                                    navController = navController,
                                     modifier = Modifier.fillMaxSize()
                                 )
                             } ?: run {
@@ -174,6 +176,15 @@ class MainActivity : ComponentActivity() {
         scope.launch {
             withContext(Dispatchers.IO) {
                 noteDao.update(note)
+            }
+        }
+    }
+
+    private fun deleteNote (note: NoteModel) {
+        val scope = CoroutineScope(Dispatchers.IO)
+        scope.launch {
+            withContext(Dispatchers.IO) {
+                noteDao.delete(note)
             }
         }
     }

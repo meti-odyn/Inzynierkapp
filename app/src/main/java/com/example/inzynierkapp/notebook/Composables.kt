@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.navigation.NavHostController
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.example.inzynierkapp.note.NoteDao
@@ -215,8 +216,10 @@ fun NotePreview(
 fun NoteContent(
     note: NoteModel,
     updateNote: (NoteModel) -> Unit,
+    deleteNote: (NoteModel) -> Unit,
     navigateToSummary: () -> Unit,
     userEmail: String,
+    navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
     val REQUEST_CODE_CAMERA = 1
@@ -278,7 +281,15 @@ fun NoteContent(
             }
         }
 
+        item {
+            Button(onClick = {
+                deleteNote(NoteModel(note.id, title, text, note.date, userEmail))
+                navController.popBackStack()
 
+            }) {
+                Text("Delete Note")
+            }
+        }
 
         item {
             Row(
@@ -335,8 +346,6 @@ fun saveInCalendar(note: NoteModel, context: Context) {
 }
 @Composable
 fun WaitingScreen(modifier: Modifier =Modifier, message: String = "loading") = Card (modifier) { Text (message) }
-
-
 
 
 
