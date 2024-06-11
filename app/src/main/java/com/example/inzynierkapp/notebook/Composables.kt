@@ -96,7 +96,7 @@ fun DefaultView(notesProvider: NoteDao, onclick: (Int) -> Unit, modifier: Modifi
             )
 
             LazyVerticalGrid(
-                GridCells.Adaptive(minSize = 180.dp), modifier,
+                GridCells.Adaptive(minSize = 140.dp), modifier,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -222,13 +222,12 @@ fun NotePreview(
     note: NoteModel,
     onclick: () -> Unit,
     modifier: Modifier = Modifier,
-    headLength: Int = 50
 ) {
 
     Card(modifier.clickable { onclick() }) {
         Column(Modifier.padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(note.name ?: "" , fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Text(note.content?.substring(0, minOf(headLength, note.content.length)) ?: "")
+            //Text(note.content?.substring(0, minOf(headLength, note.content.length)) ?: "")
         }
     }
 }

@@ -33,11 +33,13 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.example.inzynierkapp.note.*
 import com.example.inzynierkapp.notebook.AppDatabase
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import java.util.Date
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withContext
 class MainActivity : ComponentActivity() {
@@ -93,10 +95,7 @@ class MainActivity : ComponentActivity() {
                         }
 
                         composable("notebook") {
-                            DefaultView(noteDao,
-                                { id ->
-                                    selectedNoteId = id.also { navController.navigate("note") }
-                                })
+                            DefaultView(noteDao, { id -> selectedNoteId = id.also { navController.navigate("note") } })
                         }
 //                        composable("summary") { backStackEntry ->
 //                            SummaryScreen(note = note, onBack = { navController.popBackStack() })
@@ -117,9 +116,8 @@ class MainActivity : ComponentActivity() {
 
                             note?.let {
                                 NoteContent(
-                                    it,
-                                    updateNote = {/* */ },
-                                    navigateToSummary = { navController.navigate("summary/${selectedNoteId}") },
+                                    it, {note -> updateNote(note)},
+                                    navigateToSummary = { navController.navigate("summary") },
                                     Modifier.fillMaxSize()
                                 )
                             }
@@ -158,7 +156,15 @@ class MainActivity : ComponentActivity() {
             noteDao.getNote(id)
         }
     }
-    //private fun getNote(id: Int): NoteModel = NoteModel(id, "title $id", "content $id", Date())
+
+    private fun updateNote (note: NoteModel) {
+        val scope = CoroutineScope(Dispatchers.IO)
+        scope.launch {
+            withContext(Dispatchers.IO) {
+                noteDao.update(note)
+            }
+        }
+    }
 
 //    private suspend fun getAllNotes(): List<NoteModel> {
 //        return withContext(Dispatchers.IO) {
