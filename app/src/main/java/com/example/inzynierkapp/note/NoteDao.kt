@@ -16,12 +16,13 @@ interface NoteDao {
     @Update
     suspend fun update(note: NoteModel)
 
-    @Query("SELECT * FROM notes")
-    fun getAllNotes(): Flow<List<NoteModel>>
+    @Query("SELECT * FROM notes WHERE userEmail = :email")
+    fun getNotesByEmail(email: String): Flow<List<NoteModel>>
 
-    @Query("SELECT id FROM notes ORDER BY date DESC LIMIT 1")
-    fun getNewNoteID(): Int
+    @Query("SELECT * FROM notes WHERE id = :id AND userEmail = :email")
+    suspend fun getNoteByIdAndEmail(id: Int, email: String): NoteModel?
 
-    @Query("SELECT * FROM notes WHERE id = :id")
-    suspend fun getNote(id: Int): NoteModel
+    @Query("SELECT id FROM notes WHERE userEmail = :email ORDER BY date DESC LIMIT 1")
+    fun getNewNoteID(email: String): Int?
+
 }

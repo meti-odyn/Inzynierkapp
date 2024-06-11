@@ -78,13 +78,14 @@ fun SummaryScreen(note: NoteModel, onBack: () -> Unit, modifier: Modifier = Modi
                 if (note.content.orEmpty().length >= 150) {
                     output = "generating..."
                     //LaunchedEffect(key1 = note)
-                    thread{
+                    thread {
                         if (!Python.isStarted()) Python.start(AndroidPlatform(context))
                         val py = Python.getInstance()
                         val module = py.getModule("skrypt")
                         output = module.callAttr("generate_summary", note.content!!).toString()
                     }
-                } else output = "data is too short to generate summary, it has to have at least 150 characters!"
+                } else output =
+                    "data is too short to generate summary, it has to have at least 150 characters!"
 
                 Text(output, style = MaterialTheme.typography.bodySmall)
                 Button(onClick = { onBack() }) {
@@ -96,13 +97,28 @@ fun SummaryScreen(note: NoteModel, onBack: () -> Unit, modifier: Modifier = Modi
 }
 
 @Composable
-fun DefaultView(notesProvider: NoteDao, onclick: (Int) -> Unit, modifier: Modifier = Modifier) {
+fun DefaultView(
+    notesProvider: NoteDao,
+    userEmail: String,
+    onclick: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val context = LocalContext.current
 
-    val scope = rememberCoroutineScope();
+    val scope = rememberCoroutineScope()
     val notes = remember { mutableStateOf(listOf<NoteModel>()) }
-    LaunchedEffect(scope) {
-        notesProvider.getAllNotes().collect { notes.value = it }
+
+    LaunchedEffect(userEmail) {
+        notesProvider.getNotesByEmail(userEmail).collect { notesList ->
+            if (notesList.isEmpty()) {
+                scope.launch {
+                    insertDefaultNoteIfEmpty(context, userEmail, notesProvider)
+                    notesProvider.getNotesByEmail(userEmail).collect { notes.value = it }
+                }
+            } else {
+                notes.value = notesList
+            }
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -127,114 +143,58 @@ fun DefaultView(notesProvider: NoteDao, onclick: (Int) -> Unit, modifier: Modifi
 
         Surface(
             modifier = Modifier
-                .size(100.dp) // Zwiększony rozmiar Surface
+                .size(100.dp)
                 .align(Alignment.BottomEnd)
-                .padding(16.dp), // Dodane padding od dolnego końca
+                .padding(16.dp),
             shape = CircleShape,
-            color = Color(0xFFA1A1E9) // Kolor granatowy
+            color = Color(0xFFA1A1E9)
         ) {
-//            IconButton(
-//                onClick = { onclick(insertEmptyNote(context)) },
-//                Modifier.padding(12.dp)
-//            ) { // Zwiększony padding wewnątrz IconButton
-            val coroutineScope = rememberCoroutineScope()
             IconButton(
                 onClick = {
-                    coroutineScope.launch {
-                        insertEmptyNote(context)
-                        notes.value = notesProvider.getAllNotes().last()
-                        // Handle the newNoteId here
+                    scope.launch {
+                        val newNoteId = insertEmptyNoteAndGetId(context, userEmail, notesProvider)
+                        notesProvider.getNotesByEmail(userEmail).collect { notes.value = it }
+                        onclick(newNoteId)
                     }
                 },
                 Modifier.padding(12.dp)
-            ) { // Zwiększony padding wewnątrz IconButton
+            ) {
                 Icon(
                     Icons.Default.Add,
                     contentDescription = "Create new note",
                     Modifier.size(30.dp)
-                ) // Zwiększony rozmiar ikony
+                )
             }
         }
     }
 }
 
-suspend fun insertEmptyNote(context: Context) {
-    val noteDao: NoteDao = AppDatabase.getDatabase(context).noteDao
-    val newNote = NoteModel(name = "new note", content = "", date = Date())
+
+
+suspend fun insertDefaultNoteIfEmpty(context: Context, userEmail: String, noteDao: NoteDao) {
     withContext(Dispatchers.IO) {
+        val newNote = NoteModel(
+            name = "Welcome Note",
+            content = "This is your first note. Feel free to edit or delete it.",
+            date = Date(),
+            userEmail = userEmail
+        )
         noteDao.insert(newNote)
     }
 }
 
-//
-//fun insertEmptyNote(
-//    context: Context
-//): Int {
-//    val noteDao: NoteDao = AppDatabase.getDatabase(context).noteDao
-//    var newNoteId: Int = 0
-//    val newNote = NoteModel(name = "new note", content = "", date = Date())
-//    //noteDao.insert(newNote)
-//
-//    newNoteId = noteDao.getNewNoteID()
-//    return newNoteId
-//}
-//@Composable
-//fun insertEmptyNote(
-//    viewModel: NoteViewModel,
-//    onNoteInserted: (Int) -> Unit
-//): Int {
-//    var title by remember { mutableStateOf("") }
-//    var content by remember { mutableStateOf("") }
-//    val context = LocalContext.current
-//    val noteId = remember { mutableStateOf<Int?>(null) }
-//
-//    Column(
-//        modifier = Modifier
-//            .fillMaxSize()
-//            .padding(16.dp),
-//        verticalArrangement = Arrangement.Center
-//    ) {
-//        TextField(
-//            value = title,
-//            onValueChange = { title = it },
-//            label = { Text("Title") },
-//            modifier = Modifier.fillMaxWidth()
-//
-//        )
-//
-//        Spacer(modifier = Modifier.height(8.dp))
-//
-//        TextField(
-//            value = content,
-//            onValueChange = { content = it },
-//            label = { Text("Content") },
-//            modifier = Modifier.fillMaxWidth()
-//        )
-//
-//        Spacer(modifier = Modifier.height(16.dp))
-//
-//        Button(
-//            onClick = {
-//                if (title.isNotBlank() && content.isNotBlank()) {
-//                    val note = NoteRecord(name = title, content = content, data = Date())
-//                    viewModel.insert(note)
-//                    val noteId = viewModel.insert(note)
-//                    title = ""
-//                    content = ""
-//                    Toast.makeText(context, "NoteModel saved", Toast.LENGTH_SHORT).show()
-//                    onNoteInserted(noteId.value ?: 0)
-//                } else {
-//                    Toast.makeText(context, "Title and Content cannot be empty", Toast.LENGTH_SHORT).show()
-//                }
-//            },
-//            modifier = Modifier.align(Alignment.End)
-//        ) {
-//            Text("Save")
-//        }
-//    }
-//
-//    return 0
-//}
+suspend fun insertEmptyNoteAndGetId(context: Context, userEmail: String, noteDao: NoteDao): Int {
+    return withContext(Dispatchers.IO) {
+        val newNote = NoteModel(
+            name = "New Note",
+            content = "",
+            date = Date(),
+            userEmail = userEmail
+        )
+        noteDao.insert(newNote)
+        noteDao.getNewNoteID(userEmail) ?: 0
+    }
+}
 
 @Composable
 fun NotePreview(
@@ -250,70 +210,6 @@ fun NotePreview(
         }
     }
 }
-
-//@Composable
-//fun NoteContent (note: NoteModel, updateNote: (NoteModel) -> Unit, navigateToSummary: () -> Unit, modifier: Modifier = Modifier) {
-//    val REQUEST_CODE_CAMERA = 1
-//    val context = LocalContext.current
-////    val onCameraClick = {
-////        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-////        if (intent.resolveActivity(context.packageManager) != null) {
-////            context.startActivity(intent)
-////        } else {
-////            Toast.makeText(context, "No camera app found", Toast.LENGTH_SHORT).show()
-////        }
-////    }
-//
-//    val onCameraClick = {
-//        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-//            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-//            if (intent.resolveActivity(context.packageManager) != null) {
-//                context.startActivity(intent)
-//            } else {
-//                Toast.makeText(context, "No camera app found", Toast.LENGTH_SHORT).show()
-//            }
-//        } else {
-//            ActivityCompat.requestPermissions(context as Activity, arrayOf(Manifest.permission.CAMERA), REQUEST_CODE_CAMERA)
-//        }
-//    }
-//    var title by remember { mutableStateOf(note.title) }
-//    var text by remember { mutableStateOf(note.text) }
-//    LazyColumn(modifier.fillMaxSize().padding(4.dp)) {
-//
-//        item {
-//            TextField(title, { newValue -> title = newValue. also { updateNote(NoteModel(note.id, title, text)) } }, Modifier.fillMaxWidth(),
-//                textStyle = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold))
-//        }
-//
-//        item {
-//            TextField(text, { newValue -> text = newValue. also { updateNote(NoteModel(note.id, title, text)) } }, Modifier.fillMaxSize())
-//        }
-//
-//        item {
-//            Button(onClick = { saveInCalendar(note, context) }) {
-//                Text("Save in Calendar")
-//            }
-//    }
-//        item{
-//        FloatingActionButton(
-//            onClick = onCameraClick,
-//            modifier = Modifier
-//                .padding(16.dp)
-//        ) {
-//            Icon(
-//                imageVector = Icons.Default.Camera,
-//                contentDescription = "Camera Button"
-//            )
-//        }
-//
-//            }
-//        item{
-//            Button(onClick = { navigateToSummary() }) {
-//                Text("Summary")
-//            }}
-//
-//}
-//}
 @Composable
 fun NoteContent(
     note: NoteModel,
@@ -344,21 +240,23 @@ fun NoteContent(
             )
         }
     }
+
     var title by remember { mutableStateOf(note.name) }
     var text by remember { mutableStateOf(note.content) }
+
     LazyColumn(
         modifier
             .fillMaxSize()
             .padding(4.dp)
     ) {
-
         item {
             TextField(
-                title ?: "",
-                { newValue ->
-                    title = newValue.also { updateNote(NoteModel(note.id, title, text, note.date)) }
+                value = title ?: "",
+                onValueChange = { newValue ->
+                    title = newValue
+                    updateNote(NoteModel(note.id, title, text, note.date))
                 },
-                Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 textStyle = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold)
             )
         }
@@ -366,11 +264,12 @@ fun NoteContent(
         item {
             text?.let {
                 TextField(
-                    it,
-                    { newValue ->
-                        text = newValue.also { updateNote(NoteModel(note.id, title, text, note.date)) }
+                    value = it,
+                    onValueChange = { newValue ->
+                        text = newValue
+                        updateNote(NoteModel(note.id, title, text, note.date))
                     },
-                    Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize()
                 )
             }
         }

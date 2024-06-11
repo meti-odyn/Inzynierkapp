@@ -12,4 +12,5 @@ data class NoteModel(
     val name: String? = "",
     val content: String?,
     val date: Date = Date(),
+    val userEmail: String? = null,
 )
