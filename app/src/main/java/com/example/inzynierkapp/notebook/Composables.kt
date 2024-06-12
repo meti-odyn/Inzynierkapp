@@ -47,28 +47,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavHostController
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.example.inzynierkapp.note.NoteDao
 import com.example.inzynierkapp.note.NoteModel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Date
-import kotlin.concurrent.thread
 
 
 @Composable
@@ -238,8 +233,10 @@ fun NotePreview(
 fun NoteContent(
     note: NoteModel,
     updateNote: (NoteModel) -> Unit,
+    deleteNote: (NoteModel) -> Unit,
     navigateToSummary: () -> Unit,
     userEmail: String,
+    navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
     val REQUEST_CODE_CAMERA = 1
@@ -301,7 +298,15 @@ fun NoteContent(
             }
         }
 
+        item {
+            Button(onClick = {
+                deleteNote(NoteModel(note.id, title, text, note.date, userEmail))
+                navController.popBackStack()
 
+            }) {
+                Text("Delete Note")
+            }
+        }
 
         item {
             Row(
