@@ -9,43 +9,26 @@ import android.content.pm.PackageManager
 import android.provider.CalendarContract
 import android.provider.MediaStore
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Camera
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -63,18 +46,22 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Date
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SummaryScreen(note: NoteModel, onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun SummaryScreen(
+    note: NoteModel,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     var output by rememberSaveable { mutableStateOf<String>("") }
     val context = LocalContext.current
     val applicationCoroutineScope = rememberCoroutineScope()
     var enableWaitingScreen by rememberSaveable { mutableStateOf(true) }
 
-    LaunchedEffect(note.content) { // Use LifecycleOwner and note.content as keys
+    LaunchedEffect(note.content) {
         if (note.content.orEmpty().length >= 150) {
-            output = "generating..."
-            applicationCoroutineScope.launch { // Use lifecycleScope for coroutine
+            output = "Generating summary..."
+            applicationCoroutineScope.launch {
                 val summary = withContext(Dispatchers.IO) {
 //                    if (!Python.isStarted()) Python.start(AndroidPlatform(context))
 //                    val py = Python.getInstance()
@@ -86,34 +73,39 @@ fun SummaryScreen(note: NoteModel, onBack: () -> Unit, modifier: Modifier = Modi
                 enableWaitingScreen = false
             }
         } else {
-            output = "Data is too short to generate summary, it has to have at least 150 characters!"
+            output = "Data is too short to generate a summary. It must have at least 150 characters!"
         }
     }
 
-    LazyColumn(modifier.padding(16.dp)) {
-        item {
-            Column {
-                SelectionContainer {
-                    Column(Modifier.padding(12.dp)) {
-                        Text("Summary of ${note.name}", Modifier.padding(0.dp,12.dp),
-                            style = MaterialTheme.typography.titleLarge)
-
-                        if (enableWaitingScreen) {
-                            WaitingScreen(Modifier.padding(8.dp),output)
-                        } else {
-                            Text(output, style = MaterialTheme.typography.bodyLarge)
-                        }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Summary of ${note.name}") },
+                navigationIcon = {
+                    IconButton(onClick = { onBack() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 }
-                Button(onClick = { onBack() }) {
-                    Text("Go Back")
+            )
+        }
+    ) { paddingValues ->
+        Box(modifier = Modifier.padding(paddingValues)) {
+            if (enableWaitingScreen) {
+                WaitingScreen(modifier.fillMaxSize(), output)
+            } else {
+                SelectionContainer {
+                    Text(
+                        output,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(16.dp)
+                    )
                 }
             }
         }
     }
 }
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DefaultView(
     notesProvider: NoteDao,
@@ -122,7 +114,6 @@ fun DefaultView(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-
     val scope = rememberCoroutineScope()
     val notes = remember { mutableStateOf(listOf<NoteModel>()) }
 
@@ -139,55 +130,39 @@ fun DefaultView(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(modifier.padding(12.dp)) {
-            Text(
-                "Your notes:",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(8.dp)
-            )
-
-            LazyVerticalGrid(
-                GridCells.Adaptive(minSize = 140.dp), modifier,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(notes.value.size) { index ->
-                    NotePreview(notes.value[index], { onclick(notes.value[index].id) })
-                }
-            }
-        }
-
-        Surface(
-            modifier = Modifier
-                .size(100.dp)
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
-            shape = CircleShape,
-            color = Color(0xFFA1A1E9)
-        ) {
-            IconButton(
-                onClick = {
-                    scope.launch {
-                        val newNoteId = insertEmptyNoteAndGetId(context, userEmail, notesProvider)
-                        notesProvider.getNotesByEmail(userEmail).collect { notes.value = it }
-                        onclick(newNoteId)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Your Notes") },
+                actions = {
+                    IconButton(
+                        onClick = {
+                            scope.launch {
+                                val newNoteId = insertEmptyNoteAndGetId(context, userEmail, notesProvider)
+                                notesProvider.getNotesByEmail(userEmail).collect { notes.value = it }
+                                onclick(newNoteId)
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Create new note")
                     }
-                },
-                Modifier.padding(12.dp)
-            ) {
-                Icon(
-                    Icons.Default.Add,
-                    contentDescription = "Create new note",
-                    Modifier.size(30.dp)
-                )
+                }
+            )
+        }
+    ) { paddingValues ->
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 160.dp),
+            contentPadding = paddingValues,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = modifier.padding(8.dp)
+        ) {
+            items(notes.value.size) { index ->
+                NotePreview(notes.value[index], { onclick(notes.value[index].id) })
             }
         }
     }
 }
-
-
 
 suspend fun insertDefaultNoteIfEmpty(context: Context, userEmail: String, noteDao: NoteDao) {
     withContext(Dispatchers.IO) {
@@ -197,7 +172,7 @@ suspend fun insertDefaultNoteIfEmpty(context: Context, userEmail: String, noteDa
             date = Date(),
             userEmail = userEmail
         )
-        noteDao.insert(newNote)
+        noteDao.addNote(newNote)
     }
 }
 
@@ -209,25 +184,45 @@ suspend fun insertEmptyNoteAndGetId(context: Context, userEmail: String, noteDao
             date = Date(),
             userEmail = userEmail
         )
-        noteDao.insert(newNote)
+        noteDao.addNote(newNote)
         noteDao.getNewNoteID(userEmail) ?: 0
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotePreview(
     note: NoteModel,
     onclick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-
-    Card(modifier.clickable { onclick() }) {
-        Column(Modifier.padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(note.name ?: "" , fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            //Text(note.content?.substring(0, minOf(headLength, note.content.length)) ?: "")
+    Card(
+        modifier
+            .clickable { onclick() }
+            .fillMaxWidth()
+    ) {
+        Column(
+            Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text(
+                note.name ?: "",
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                note.content ?: "",
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 2,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteContent(
     note: NoteModel,
@@ -262,76 +257,69 @@ fun NoteContent(
         }
     }
 
-
-
     var title by remember { mutableStateOf(note.name) }
     var text by remember { mutableStateOf(note.content) }
 
-    LazyColumn(
-        modifier
-            .fillMaxSize()
-            .padding(4.dp)
-    ) {
-        item {
-            TextField(
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(title ?: "Edit Note") },
+                actions = {
+                    IconButton(onClick = { navigateToSummary() }) {
+                        Icon(Icons.Default.Edit, contentDescription = "Summary")
+                    }
+                    IconButton(onClick = {
+                        deleteNote(NoteModel(note.id, title, text, note.date, userEmail))
+                        navController.popBackStack()
+                    }) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete Note")
+                    }
+                }
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = onCameraClick) {
+                Icon(Icons.Default.Camera, contentDescription = "Camera")
+            }
+        }
+    ) { paddingValues ->
+        Column(
+            modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
+        ) {
+            OutlinedTextField(
                 value = title ?: "",
                 onValueChange = { newValue ->
                     title = newValue
                     updateNote(NoteModel(note.id, title, text, note.date, userEmail))
                 },
-                modifier = Modifier.fillMaxWidth(),
-                textStyle = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                label = { Text("Title") },
+                textStyle = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold),
+                modifier = Modifier.fillMaxWidth()
             )
-        }
-
-        item {
+            Spacer(modifier = Modifier.height(16.dp))
             text?.let {
-                TextField(
+                OutlinedTextField(
                     value = it,
                     onValueChange = { newValue ->
                         text = newValue
                         updateNote(NoteModel(note.id, title, text, note.date, userEmail))
                     },
-                    modifier = Modifier.fillMaxSize()
+                    label = { Text("Content") },
+                    modifier = Modifier.fillMaxSize(),
+                    textStyle = TextStyle(fontSize = 16.sp),
+                    singleLine = false,
+                    maxLines = Int.MAX_VALUE
                 )
             }
-        }
-
-        item {
-            Button(onClick = {
-                deleteNote(NoteModel(note.id, title, text, note.date, userEmail))
-                navController.popBackStack()
-
-            }) {
-                Text("Delete Note")
-            }
-        }
-
-        item {
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = { saveInCalendar(note, context) },
+                modifier = Modifier.align(Alignment.End)
             ) {
-                Button(onClick = { saveInCalendar(note, context) }) {
-                    Text("Save in Calendar")
-                }
-                Button(onClick = { navigateToSummary() }) {
-                    Text("Summary")
-                }
-            }
-        }
-
-        item {
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-                FloatingActionButton(
-                    onClick = onCameraClick,
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Camera,
-                        contentDescription = "Camera Button"
-                    )
-                }
+                Text("Save in Calendar")
             }
         }
     }
@@ -340,10 +328,9 @@ fun NoteContent(
 fun saveInCalendar(note: NoteModel, context: Context) {
     GlobalScope.launch {
         val datesToAdd = listOf(
-            Date(), // dzisiejsza data
-            Date(System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000), // data za tydzień
-            Date(System.currentTimeMillis() + 14 * 24 * 60 * 60 * 1000), // data za dwa tygodnie
-            // dodaj więcej dat według potrzeb
+            Date(), // Today's date
+            Date(System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000), // One week later
+            Date(System.currentTimeMillis() + 14 * 24 * 60 * 60 * 1000), // Two weeks later
         )
         for (date in datesToAdd) {
             val eventTime = date.time
@@ -356,13 +343,24 @@ fun saveInCalendar(note: NoteModel, context: Context) {
                 putExtra(CalendarContract.EXTRA_EVENT_END_TIME, eventTime + 60 * 60 * 1000)
             }
             context.startActivity(intent)
-            delay(10000) // wait for 10 seconds before launching the next intent
+            delay(10000)
         }
     }
 }
 
 @Composable
-fun WaitingScreen(modifier: Modifier =Modifier, message: String = "loading") = Card (modifier) { Text (message) }
+fun WaitingScreen(modifier: Modifier = Modifier, message: String = "Loading...") {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier.fillMaxSize()
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            CircularProgressIndicator()
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(message, style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
 
 class InitDb : Application() {
     override fun onCreate() {
@@ -377,6 +375,14 @@ class InitDb : Application() {
 
 @Composable
 fun NoConnectionScreen() {
-
-    Text(text = "Brak połączenia z internetem")
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Text(
+            text = "No internet connection",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.error
+        )
+    }
 }

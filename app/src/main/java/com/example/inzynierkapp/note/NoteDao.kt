@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface NoteDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insert(note: NoteModel)
+    fun addNote(note: NoteModel)
 
     @Update
     suspend fun update(note: NoteModel)
@@ -27,5 +27,8 @@ interface NoteDao {
 
     @Delete
     suspend fun delete(note: NoteModel)
+    @Query("DELETE FROM notes")
+    suspend fun clearAll()
+
 
 }
