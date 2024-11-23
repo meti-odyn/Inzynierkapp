@@ -45,6 +45,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withContext
+import com.google.firebase.firestore.FirebaseFirestore
+
 class MainActivity : ComponentActivity() {
     private lateinit var module: PyObject
     private val auth: FirebaseAuth by lazy { Firebase.auth }
@@ -78,6 +80,16 @@ class MainActivity : ComponentActivity() {
             .requestEmail()
             .build()
         googleSignInClient = GoogleSignIn.getClient(this, gso)
+
+        // Check if the user is already logged in
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            userEmail = currentUser.email
+            userEmail?.let { email ->
+                fetchNotesFromFirebase(email) // Synchronizuj dane z Firebase
+            }
+        }
+
         setContent {
             InzynierkappTheme {
                 Surface(
@@ -90,8 +102,13 @@ class MainActivity : ComponentActivity() {
                     NavHost(navController, startDestination = "login") {
 
                         composable("login") {
-                            AppContent(auth) { navController.navigate("notebook")
-                                userEmail = auth.currentUser?.email}
+                            AppContent(auth) {
+                                navController.navigate("notebook")
+                                userEmail = auth.currentUser?.email
+                                userEmail?.let { email ->
+                                    fetchNotesFromFirebase(email) // Synchronizuj dane po zalogowaniu
+                                }
+                            }
                         }
 
                         composable("notebook") {
@@ -143,6 +160,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+
     private fun firebaseAuthWithGoogle(idToken: String) {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         auth.signInWithCredential(credential)
@@ -161,33 +179,105 @@ class MainActivity : ComponentActivity() {
     private fun initDB() {
         val db = AppDatabase.getDatabase(this)
         val testNote: NoteModel = NoteModel(1, "test", "test", Date())
-        val noteDao = db.noteDao.insert(testNote)
+        val noteDao = db.noteDao.addNote(testNote)
         //val summaryDao = db.summaryDao
         //val questionDao = db.questionDao
     }
+    private fun addNote(note: NoteModel) {
+        CoroutineScope(Dispatchers.IO).launch {
+            noteDao.addNote(note) // Add to local database
+            userEmail?.let {
+                syncNotesToFirebase(it) // Sync with Firebase
+            }
+        }
+    }
+
+    private fun updateNote(note: NoteModel) {
+        CoroutineScope(Dispatchers.IO).launch {
+            noteDao.update(note) // Update locally
+            userEmail?.let {
+                syncNotesToFirebase(it) // Sync with Firebase
+            }
+        }
+    }
+
+    private fun deleteNote(note: NoteModel) {
+        CoroutineScope(Dispatchers.IO).launch {
+            noteDao.delete(note) // Delete locally
+            userEmail?.let {
+                syncNotesToFirebase(it) // Sync with Firebase
+            }
+        }
+    }
+
+    private fun logout() {
+        userEmail?.let {
+            syncNotesToFirebase(it) // Sync before logging out
+        }
+        auth.signOut()
+        clearLocalDatabase() // Clear local database
+        navController.navigate("login") // Navigate to login screen
+    }
+
+    private fun syncNotesToFirebase(userEmail: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val notes = noteDao.getNotesByEmail(userEmail).first() // Get local notes
+            val notesMap = notes.map {
+                mapOf(
+                    "id" to it.id,
+                    "name" to it.name,
+                    "content" to it.content,
+                    "date" to it.date.toString()
+                )
+            }
+            val firestore = FirebaseFirestore.getInstance()
+            val userDoc = firestore.collection("notes").document(userEmail)
+            userDoc.set(mapOf("notes" to notesMap)) // Save to Firebase
+        }
+    }
+
+    private fun fetchNotesFromFirebase(userEmail: String) {
+        val firestore = FirebaseFirestore.getInstance()
+        val userDoc = firestore.collection("notes").document(userEmail)
+
+        userDoc.get().addOnSuccessListener { document ->
+            if (document.exists()) {
+                val notesList = document.get("notes") as? List<Map<String, Any>> ?: emptyList()
+                val notes = notesList.map {
+                    NoteModel(
+                        id = (it["id"] as Long).toInt(),
+                        name = it["name"] as? String,
+                        content = it["content"] as? String,
+                        date = (it["date"] as String).let { dateStr -> Date(dateStr) },
+                        userEmail = userEmail
+                    )
+                }
+                saveNotesToLocalDatabase(notes)
+            }
+        }.addOnFailureListener { exception ->
+            Log.e("FirebaseSync", "Error fetching notes: ", exception)
+        }
+    }
+
+    private fun saveNotesToLocalDatabase(notes: List<NoteModel>) {
+        CoroutineScope(Dispatchers.IO).launch {
+            noteDao.clearAll() // Clear local database
+            notes.forEach { noteDao.addNote(it) } // Save new data
+        }
+    }
+
     private suspend fun getNoteByIdAndEmail(id: Int, email: String): NoteModel? {
         return withContext(Dispatchers.IO) {
             noteDao.getNoteByIdAndEmail(id, email)
         }
     }
 
-    private fun updateNote (note: NoteModel) {
-        val scope = CoroutineScope(Dispatchers.IO)
-        scope.launch {
-            withContext(Dispatchers.IO) {
-                noteDao.update(note)
-            }
+    private fun clearLocalDatabase() {
+        CoroutineScope(Dispatchers.IO).launch {
+            noteDao.clearAll()
         }
     }
 
-    private fun deleteNote (note: NoteModel) {
-        val scope = CoroutineScope(Dispatchers.IO)
-        scope.launch {
-            withContext(Dispatchers.IO) {
-                noteDao.delete(note)
-            }
-        }
-    }
 
 //    private suspend fun getAllNotes(): List<NoteModel> {
 //        return withContext(Dispatchers.IO) {
