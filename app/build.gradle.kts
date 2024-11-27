@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.kapt3.base.Kapt.kapt
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("com.chaquo.python")
+//    id("com.chaquo.python")
     alias(libs.plugins.googleGmsGoogleServices)
     kotlin("kapt")
 }
@@ -59,31 +59,31 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-    flavorDimensions += "pyVersion"
-    productFlavors {
-        create("py38") { dimension = "pyVersion" }
-    }
+//    flavorDimensions += "pyVersion"
+//    productFlavors {
+//        create("py38") { dimension = "pyVersion" }
+//    }
 }
-chaquopy {
-    defaultConfig {
-        version = "3.8"
-        pip {
-            install("torch==1.8.1")
-            install("sentencepiece==0.1.95")
-            install("transformers==4.15.0")
-        }
-    }
-    productFlavors {
-        getByName("py38") { version = "3.8" }
-    }
-    sourceSets {
-        getByName("main") {
-            srcDir("src/main/python")
-        }
-    }
-
-
-}
+//chaquopy {
+//    defaultConfig {
+//        version = "3.8"
+//        pip {
+//            install("torch==1.8.1")
+//            install("sentencepiece==0.1.95")
+//            install("transformers==4.15.0")
+//        }
+//    }
+//    productFlavors {
+//        getByName("py38") { version = "3.8" }
+//    }
+//    sourceSets {
+//        getByName("main") {
+//            srcDir("src/main/python")
+//        }
+//    }
+//
+//
+//}
 
 dependencies {
 
@@ -103,9 +103,6 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.database)
-//    implementation(libs.firebase.auth)
-//    implementation(libs.firebase.firestore)
-//    implementation(libs.firebase.database)
     implementation("com.google.android.gms:play-services-auth:21.2.0")
     implementation(libs.androidx.benchmark.macro)
     implementation(libs.firebase.crashlytics.buildtools)
