@@ -19,7 +19,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.chaquo.python.PyObject
 import com.example.inzynierkapp.login.AppContent
 import com.example.inzynierkapp.notebook.DefaultView
 import com.example.inzynierkapp.notebook.NoteContent
@@ -48,7 +47,6 @@ import kotlinx.coroutines.withContext
 import com.google.firebase.firestore.FirebaseFirestore
 
 class MainActivity : ComponentActivity() {
-    private lateinit var module: PyObject
     private val auth: FirebaseAuth by lazy { Firebase.auth }
     lateinit var googleSignInClient: GoogleSignInClient
     private lateinit var navController: NavHostController

@@ -22,7 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -56,8 +56,8 @@ class SplashActivity : ComponentActivity(){
 
     @Composable
     private fun SplashScreen() {
-        var scale by remember { mutableStateOf(1f) }
-        var opacity by remember { mutableStateOf(0f) }
+        var scale by remember { mutableFloatStateOf(1f) }
+        var opacity by remember { mutableFloatStateOf(0f) }
 
         LaunchedEffect(key1 = true) {
             delay(1000) // opóźnienie przed rozpoczęciem animacji
