@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
 import com.example.inzynierkapp.note.NoteDao
 import com.example.inzynierkapp.note.NoteModel
@@ -236,17 +237,33 @@ fun NoteContent(
     val REQUEST_CODE_CAMERA = 1
     val context = LocalContext.current
 
-    val onCameraClick = {
+    val onCameraClick: () -> Unit = {
         if (ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.CAMERA
             ) == PackageManager.PERMISSION_GRANTED
         ) {
-            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-            if (intent.resolveActivity(context.packageManager) != null) {
-                context.startActivity(intent)
+            val activity = context as? Activity
+            if (activity != null) {
+                val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                val photoFile = createImageFile(context)
+                if (photoFile != null) {
+                    val photoUri = FileProvider.getUriForFile(
+                        context,
+                        "${context.packageName}.fileprovider",
+                        photoFile
+                    )
+                    intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
+
+                    if (intent.resolveActivity(context.packageManager) != null) {
+                        activity.startActivityForResult(intent, REQUEST_CODE_CAMERA)
+                    } else {
+                        Toast.makeText(context, "No camera app found", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
             } else {
-                Toast.makeText(context, "No camera app found", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Unable to access activity context", Toast.LENGTH_SHORT).show()
             }
         } else {
             ActivityCompat.requestPermissions(
