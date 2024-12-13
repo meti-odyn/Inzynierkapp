@@ -1,11 +1,9 @@
 package com.example.inzynierkapp
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -14,7 +12,6 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -38,12 +35,10 @@ import com.example.inzynierkapp.notebook.WaitingScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import java.util.Date
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withContext
+import com.example.inzynierkapp.backend.sendRequestToServer
+
 class MainActivity : ComponentActivity() {
     private val auth: FirebaseAuth by lazy { Firebase.auth }
     lateinit var googleSignInClient: GoogleSignInClient
@@ -99,17 +94,59 @@ class MainActivity : ComponentActivity() {
                             })
                         }
 
+//                        composable("summary") {
+//                            var note by remember { mutableStateOf<NoteModel?>(null) }
+//                            LaunchedEffect(selectedNoteId) {
+//                                note = getNoteByIdAndEmail(selectedNoteId, userEmail!!)
+//                            }
+//                            if (note != null) {
+//                                SummaryScreen(note!!, { navController.popBackStack() })
+//                            } else {
+//                                WaitingScreen(Modifier.fillMaxSize())
+//                            }
+//
+//                        }
                         composable("summary") {
                             var note by remember { mutableStateOf<NoteModel?>(null) }
+                            var summary by remember { mutableStateOf("Ładowanie streszczenia...") }
+                            var questions by remember { mutableStateOf("Ładowanie pytań...") }
+                            var errorMessage by remember { mutableStateOf<String?>(null) }
+
+                            // Pobieranie notatki i wysyłanie zapytania do serwera
                             LaunchedEffect(selectedNoteId) {
                                 note = getNoteByIdAndEmail(selectedNoteId, userEmail!!)
+                                note?.let {
+                                    val content = it.content ?: "Brak treści"
+                                    sendRequestToServer(
+                                        prompt = content,
+                                        onResult = { resultSummary, resultQuestions ->
+                                            summary = resultSummary
+                                            questions = resultQuestions
+                                        },
+                                        onError = { error ->
+                                            errorMessage = error
+                                        }
+                                    )
+                                }
                             }
-                            if (note != null) {
-                                SummaryScreen(note!!, { navController.popBackStack() })
+
+                            // Wyświetlanie ekranu w zależności od stanu
+                            if (errorMessage != null) {
+                                Text(
+                                    text = "Błąd: $errorMessage",
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            } else if (note != null) {
+                                SummaryScreen(
+                                    note = note!!,
+                                    summary = summary ?: "Brak streszczenia",  // Domyślna wartość
+                                    questions = questions ?: "Brak pytań",    // Domyślna wartość
+                                    onBack = { navController.popBackStack() }
+                                )
                             } else {
                                 WaitingScreen(Modifier.fillMaxSize())
                             }
-
                         }
 
                         composable("note") {

@@ -62,49 +62,82 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Date
+import com.example.inzynierkapp.backend.sendRequestToServer
 
 
-@Composable
-fun SummaryScreen(note: NoteModel, onBack: () -> Unit, modifier: Modifier = Modifier) {
-    var output by rememberSaveable { mutableStateOf<String>("") }
-    val context = LocalContext.current
-    val applicationCoroutineScope = rememberCoroutineScope()
-    var enableWaitingScreen by rememberSaveable { mutableStateOf(true) }
-
-    LaunchedEffect(note.content) { // Use LifecycleOwner and note.content as keys
-        if (note.content.orEmpty().length >= 150) {
-            output = "generating..."
-            applicationCoroutineScope.launch { // Use lifecycleScope for coroutine
-                val summary = withContext(Dispatchers.IO) {
+//@Composable
+//fun SummaryScreen(note: NoteModel, onBack: () -> Unit, modifier: Modifier = Modifier) {
+//    var output by rememberSaveable { mutableStateOf<String>("") }
+//    val context = LocalContext.current
+//    val applicationCoroutineScope = rememberCoroutineScope()
+//    var enableWaitingScreen by rememberSaveable { mutableStateOf(true) }
+//
+//    LaunchedEffect(note.content) { // Use LifecycleOwner and note.content as keys
+//        if (note.content.orEmpty().length >= 150) {
+//            output = "generating..."
+//            applicationCoroutineScope.launch { // Use lifecycleScope for coroutine
+//                val summary = withContext(Dispatchers.IO) {
 //                    if (!Python.isStarted()) Python.start(AndroidPlatform(context))
 //                    val py = Python.getInstance()
 //                    val module = py.getModule("skrypt")
 //                    return@withContext module.callAttr("generate_summary", note.content!!).toString()
-                    return@withContext "generate_summary"
-                }
-                output = summary
-                enableWaitingScreen = false
-            }
-        } else {
-            output = "Data is too short to generate summary, it has to have at least 150 characters!"
-        }
-    }
-
+//                }
+//                output = summary
+//                enableWaitingScreen = false
+//            }
+//        } else {
+//            output = "Data is too short to generate summary, it has to have at least 150 characters!"
+//        }
+//    }
+//
+//    LazyColumn(modifier.padding(16.dp)) {
+//        item {
+//            Column {
+//                SelectionContainer {
+//                    Column(Modifier.padding(12.dp)) {
+//                        Text("Summary of ${note.name}", Modifier.padding(0.dp,12.dp),
+//                            style = MaterialTheme.typography.titleLarge)
+//
+//                        if (enableWaitingScreen) {
+//                            WaitingScreen(Modifier.padding(8.dp),output)
+//                        } else {
+//                            Text(output, style = MaterialTheme.typography.bodyLarge)
+//                        }
+//                    }
+//                }
+//                Button(onClick = { onBack() }) {
+//                    Text("Go Back")
+//                }
+//            }
+//        }
+//    }
+//}
+@Composable
+fun SummaryScreen(
+    note: NoteModel,
+    summary: String,         // Dodaj parametr `summary` typu String
+    questions: String,       // Dodaj parametr `questions` typu String
+    onBack: () -> Unit,      // Funkcja zwrotna dla przycisku "Back"
+    modifier: Modifier = Modifier
+) {
+    // Twoja implementacja ekranu
     LazyColumn(modifier.padding(16.dp)) {
         item {
             Column {
-                SelectionContainer {
-                    Column(Modifier.padding(12.dp)) {
-                        Text("Summary of ${note.name}", Modifier.padding(0.dp,12.dp),
-                            style = MaterialTheme.typography.titleLarge)
-
-                        if (enableWaitingScreen) {
-                            WaitingScreen(Modifier.padding(8.dp),output)
-                        } else {
-                            Text(output, style = MaterialTheme.typography.bodyLarge)
-                        }
-                    }
-                }
+                Text("Summary of ${note.name}", Modifier.padding(0.dp, 12.dp),
+                    style = MaterialTheme.typography.titleLarge)
+                Text("Streszczenie:", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = "Pytania kontrolne:",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(top = 16.dp)
+                )
+                Text(
+                    text = questions ?: "Brak pytań", // Ustaw domyślną wartość
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(8.dp)
+                )
+               // Text(questions, style = MaterialTheme.typography.bodyLarge, Modifier.padding(8.dp))
                 Button(onClick = { onBack() }) {
                     Text("Go Back")
                 }
@@ -112,7 +145,6 @@ fun SummaryScreen(note: NoteModel, onBack: () -> Unit, modifier: Modifier = Modi
         }
     }
 }
-
 
 @Composable
 fun DefaultView(
