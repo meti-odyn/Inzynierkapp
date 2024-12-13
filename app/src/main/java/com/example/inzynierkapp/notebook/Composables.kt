@@ -54,8 +54,6 @@ import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
-import com.chaquo.python.Python
-import com.chaquo.python.android.AndroidPlatform
 import com.example.inzynierkapp.note.NoteDao
 import com.example.inzynierkapp.note.NoteModel
 import kotlinx.coroutines.Dispatchers
@@ -78,10 +76,11 @@ fun SummaryScreen(note: NoteModel, onBack: () -> Unit, modifier: Modifier = Modi
             output = "generating..."
             applicationCoroutineScope.launch { // Use lifecycleScope for coroutine
                 val summary = withContext(Dispatchers.IO) {
-                    if (!Python.isStarted()) Python.start(AndroidPlatform(context))
-                    val py = Python.getInstance()
-                    val module = py.getModule("skrypt")
-                    return@withContext module.callAttr("generate_summary", note.content!!).toString()
+//                    if (!Python.isStarted()) Python.start(AndroidPlatform(context))
+//                    val py = Python.getInstance()
+//                    val module = py.getModule("skrypt")
+//                    return@withContext module.callAttr("generate_summary", note.content!!).toString()
+                    return@withContext "generate_summary"
                 }
                 output = summary
                 enableWaitingScreen = false
