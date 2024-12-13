@@ -86,6 +86,8 @@ android {
 //}
 
 dependencies {
+    implementation("io.noties.markwon:core:4.6.2")
+    implementation("io.noties.markwon:image:4.6.2")
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
