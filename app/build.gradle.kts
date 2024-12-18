@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.kapt3.base.Kapt.kapt
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -86,8 +84,7 @@ android {
 //}
 
 dependencies {
-    implementation("io.noties.markwon:core:4.6.2")
-    implementation("io.noties.markwon:image:4.6.2")
+
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
@@ -116,6 +113,8 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+    implementation("io.noties.markwon:core:4.6.2")
+    implementation("io.noties.markwon:image:4.6.2")
 
     implementation("androidx.room:room-runtime:2.6.1")
     "kapt"("androidx.room:room-compiler:2.6.1")

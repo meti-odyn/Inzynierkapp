@@ -3,17 +3,17 @@ package com.example.inzynierkapp.notebook
 import android.app.Application
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.provider.CalendarContract
-import android.provider.MediaStore
-import android.text.SpannableString
-import android.text.SpannableStringBuilder
-import android.text.Spanned
-import android.text.style.ForegroundColorSpan
 import android.widget.TextView
-import android.widget.Toast
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -22,37 +22,43 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import com.example.inzynierkapp.note.NoteDao
 import com.example.inzynierkapp.note.NoteModel
+import io.noties.markwon.Markwon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Date
-import com.example.inzynierkapp.backend.sendRequestToServer
-import io.noties.markwon.AbstractMarkwonPlugin
-import io.noties.markwon.Markwon
-import io.noties.markwon.MarkwonSpansFactory
-import io.noties.markwon.MarkwonVisitor
-import io.noties.markwon.core.spans.LinkSpan
-import org.commonmark.parser.Parser
 
 
 //@OptIn(ExperimentalMaterial3Api::class)
@@ -483,6 +489,104 @@ fun NotePreview(
     }
 }
 
+//@OptIn(ExperimentalMaterial3Api::class)
+//@Composable
+//fun NoteContent(
+//    note: NoteModel,
+//    updateNote: (NoteModel) -> Unit,
+//    deleteNote: (NoteModel) -> Unit,
+//    navigateToSummary: () -> Unit,
+//    userEmail: String,
+//    navController: NavHostController,
+//    modifier: Modifier = Modifier
+//) {
+//    val REQUEST_CODE_CAMERA = 1
+//    val context = LocalContext.current
+//
+//    val onCameraClick = {
+//        // Obsługa kamery
+//    }
+//
+//    var title by remember { mutableStateOf(note.name) }
+//    var text by remember { mutableStateOf(note.content) }
+//    var showMarkdownPreview by remember { mutableStateOf(false) }
+//
+//    if (showMarkdownPreview) {
+//        text?.let {
+//            MarkdownPreview(it)
+//        } ?: run {
+//
+//            Text("No content to display")
+//        }}
+//        else{
+//    Scaffold(
+//        topBar = {
+//            TopAppBar(
+//                title = { Text(title ?: "Edit Note") },
+//                actions = {
+//                    IconButton(onClick = { navigateToSummary() }) {
+//                        Icon(Icons.Default.Edit, contentDescription = "Summary")
+//                    }
+//                    IconButton(onClick = {
+//                        deleteNote(NoteModel(note.id, title, text, note.date, userEmail))
+//                        navController.popBackStack()
+//                    }) {
+//                        Icon(Icons.Default.Delete, contentDescription = "Delete Note")
+//                    }
+//                }
+//            )
+//        },
+//        floatingActionButton = {
+//            FloatingActionButton(onClick = onCameraClick) {
+//                Icon(Icons.Default.Camera, contentDescription = "Camera")
+//            }
+//        }
+//    ) { paddingValues ->
+//        Column(
+//            modifier
+//                .fillMaxSize()
+//                .padding(paddingValues)
+//                .padding(16.dp)
+//        ) {
+//            OutlinedTextField(
+//                value = title ?: "",
+//                onValueChange = { newValue ->
+//                    title = if (newValue.isBlank()) "Untitled" else newValue
+//                    updateNote(NoteModel(note.id, title, text, note.date, userEmail))
+//                },
+//                label = { Text("Title") },
+//                textStyle = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold),
+//                modifier = Modifier.fillMaxWidth()
+//            )
+//            Spacer(modifier = Modifier.height(16.dp))
+//            text?.let {
+//                OutlinedTextField(
+//                    value = it,
+//                    onValueChange = { newValue ->
+//                        text = newValue
+//                        updateNote(NoteModel(note.id, title, text, note.date, userEmail))
+//                    },
+//                    label = { Text("Content") },
+//                    modifier = Modifier.fillMaxSize(),
+//                    textStyle = TextStyle(fontSize = 16.sp),
+//                    singleLine = false,
+//                    maxLines = Int.MAX_VALUE
+//                )
+//            }
+//            Spacer(modifier = Modifier.height(16.dp))
+//            Button(
+//                onClick = { saveInCalendar(note, context) },
+//                modifier = Modifier.align(Alignment.End)
+//            ) {
+//                Text("Save in Calendar")
+//            }
+//        }
+//        Button(onClick = { showMarkdownPreview = !showMarkdownPreview }) {
+//                    Text(if (showMarkdownPreview) "Edit" else "Preview Markdown")
+//                }}
+//    }
+//}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteContent(
@@ -506,78 +610,85 @@ fun NoteContent(
     var showMarkdownPreview by remember { mutableStateOf(false) }
 
     if (showMarkdownPreview) {
-            MarkdownPreview(text)
-        } 
-        else{
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(title ?: "Edit Note") },
-                actions = {
-                    IconButton(onClick = { navigateToSummary() }) {
-                        Icon(Icons.Default.Edit, contentDescription = "Summary")
-                    }
-                    IconButton(onClick = {
-                        deleteNote(NoteModel(note.id, title, text, note.date, userEmail))
-                        navController.popBackStack()
-                    }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete Note")
-                    }
-                }
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = onCameraClick) {
-                Icon(Icons.Default.Camera, contentDescription = "Camera")
-            }
+        text?.let {
+            MarkdownPreview(it)
+        } ?: run {
+            Text("No content to display")
         }
-    ) { paddingValues ->
-        Column(
-            modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
-        ) {
-            OutlinedTextField(
-                value = title ?: "",
-                onValueChange = { newValue ->
-                    title = if (newValue.isBlank()) "Untitled" else newValue
-                    updateNote(NoteModel(note.id, title, text, note.date, userEmail))
-                },
-                label = { Text("Title") },
-                textStyle = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold),
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            text?.let {
+    } else {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(title ?: "Edit Note") },
+                    actions = {
+                        IconButton(onClick = { navigateToSummary() }) {
+                            Icon(Icons.Default.Edit, contentDescription = "Summary")
+                        }
+                        IconButton(onClick = {
+                            deleteNote(NoteModel(note.id, title, text, note.date, userEmail))
+                            navController.popBackStack()
+                        }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete Note")
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = { showMarkdownPreview = !showMarkdownPreview },
+                           // modifier = Modifier.align(Alignment.End)
+                        ) {
+                            Text(if (showMarkdownPreview) "Edit" else "Preview Markdown")
+                        }
+                    }
+                )
+            },
+            floatingActionButton = {
+                FloatingActionButton(onClick = onCameraClick) {
+                    Icon(Icons.Default.Camera, contentDescription = "Camera")
+                }
+            }
+        ) { paddingValues ->
+            Column(
+                modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp)
+            ) {
                 OutlinedTextField(
-                    value = it,
+                    value = title ?: "",
                     onValueChange = { newValue ->
-                        text = newValue
+                        title = if (newValue.isBlank()) "Untitled" else newValue
                         updateNote(NoteModel(note.id, title, text, note.date, userEmail))
                     },
-                    label = { Text("Content") },
-                    modifier = Modifier.fillMaxSize(),
-                    textStyle = TextStyle(fontSize = 16.sp),
-                    singleLine = false,
-                    maxLines = Int.MAX_VALUE
+                    label = { Text("Title") },
+                    textStyle = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold),
+                    modifier = Modifier.fillMaxWidth()
                 )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = { saveInCalendar(note, context) },
-                modifier = Modifier.align(Alignment.End)
-            ) {
-                Text("Save in Calendar")
+                Spacer(modifier = Modifier.height(16.dp))
+                text?.let {
+                    OutlinedTextField(
+                        value = it,
+                        onValueChange = { newValue ->
+                            text = newValue
+                            updateNote(NoteModel(note.id, title, text, note.date, userEmail))
+                        },
+                        label = { Text("Content") },
+                        modifier = Modifier.fillMaxSize(),
+                        textStyle = TextStyle(fontSize = 16.sp),
+                        singleLine = false,
+                        maxLines = Int.MAX_VALUE
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = { saveInCalendar(note, context) },
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Save in Calendar")
+                }
+
             }
         }
-        Button(onClick = { showMarkdownPreview = !showMarkdownPreview }) {
-                    Text(if (showMarkdownPreview) "Edit" else "Preview Markdown")
-                }}
     }
 }
-
-
 
 fun saveInCalendar(note: NoteModel, context: Context) {
     GlobalScope.launch {
