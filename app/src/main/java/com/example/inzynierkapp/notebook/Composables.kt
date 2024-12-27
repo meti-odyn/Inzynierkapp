@@ -1,46 +1,58 @@
 package com.example.inzynierkapp.notebook
 
-import android.Manifest
-import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.provider.CalendarContract
-import android.provider.MediaStore
-import android.widget.Toast
-import androidx.compose.foundation.Image
+import android.widget.TextView
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
-import com.chaquo.python.Python
-import com.chaquo.python.android.AndroidPlatform
 import com.example.inzynierkapp.note.NoteDao
 import com.example.inzynierkapp.note.NoteModel
+import io.noties.markwon.Markwon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -48,64 +60,108 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Date
 
-@OptIn(ExperimentalMaterial3Api::class)
+
+//@OptIn(ExperimentalMaterial3Api::class)
+//@Composable
+//fun SummaryScreen(
+//    note: NoteModel,
+//    onBack: () -> Unit,
+//    modifier: Modifier = Modifier
+//) {
+//    var output by rememberSaveable { mutableStateOf<String>("") }
+//    val context = LocalContext.current
+//    val applicationCoroutineScope = rememberCoroutineScope()
+//    var enableWaitingScreen by rememberSaveable { mutableStateOf(true) }
+//
+//    LaunchedEffect(note.content) {
+//        if (note.content.orEmpty().length >= 150) {
+//            output = "Generating summary..."
+//            applicationCoroutineScope.launch {
+//                val summary = withContext(Dispatchers.IO) {
+////                    if (!Python.isStarted()) Python.start(AndroidPlatform(context))
+////                    val py = Python.getInstance()
+////                    val module = py.getModule("skrypt")
+////                    return@withContext module.callAttr("generate_summary", note.content!!).toString()
+//                    return@withContext "generate_summary"
+//                }
+//                output = summary
+//                enableWaitingScreen = false
+//            }
+//        } else {
+//            output = "Data is too short to generate a summary. It must have at least 150 characters!"
+//        }
+//    }
+//
+//    Scaffold(
+//        topBar = {
+//            TopAppBar(
+//                title = { Text("Summary of ${note.name}") },
+//                navigationIcon = {
+//                    IconButton(onClick = { onBack() }) {
+//                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+//                    }
+//                }
+//            )
+//        }
+//    ) { paddingValues ->
+//        Box(modifier = Modifier.padding(paddingValues)) {
+//            if (enableWaitingScreen) {
+//                WaitingScreen(modifier.fillMaxSize(), output)
+//            } else {
+//                SelectionContainer {
+//                    Text(
+//                        output,
+//                        style = MaterialTheme.typography.bodyLarge,
+//                        modifier = Modifier.padding(16.dp)
+//                    )
+//                }
+//            }
+//        }
+//    }
+//}
 @Composable
 fun SummaryScreen(
     note: NoteModel,
-    onBack: () -> Unit,
+    summary: String,         // Dodaj parametr `summary` typu String
+    questions: String,       // Dodaj parametr `questions` typu String
+    onBack: () -> Unit,      // Funkcja zwrotna dla przycisku "Back"
     modifier: Modifier = Modifier
 ) {
-    var output by rememberSaveable { mutableStateOf<String>("") }
-    val context = LocalContext.current
-    val applicationCoroutineScope = rememberCoroutineScope()
-    var enableWaitingScreen by rememberSaveable { mutableStateOf(true) }
-
-    LaunchedEffect(note.content) {
-        if (note.content.orEmpty().length >= 150) {
-            output = "Generating summary..."
-            applicationCoroutineScope.launch {
-                val summary = withContext(Dispatchers.IO) {
-                    if (!Python.isStarted()) Python.start(AndroidPlatform(context))
-                    val py = Python.getInstance()
-                    val module = py.getModule("skrypt")
-                    return@withContext module.callAttr("generate_summary", note.content!!).toString()
-                }
-                output = summary
-                enableWaitingScreen = false
-            }
-        } else {
-            output = "Data is too short to generate a summary. It must have at least 150 characters!"
-        }
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Summary of ${note.name}") },
-                navigationIcon = {
-                    IconButton(onClick = { onBack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
-        Box(modifier = Modifier.padding(paddingValues)) {
-            if (enableWaitingScreen) {
-                WaitingScreen(modifier.fillMaxSize(), output)
-            } else {
-                SelectionContainer {
-                    Text(
-                        output,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(16.dp)
-                    )
+    LazyColumn(modifier.padding(16.dp)) {
+        item {
+            Column {
+                Text(
+                    text = "Summary of ${note.name ?: "Brak nazwy"}",
+                    modifier = Modifier.padding(0.dp, 12.dp),
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Text(
+                    text = "Summary:",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = summary ?: "Brak streszczenia",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(8.dp)
+                )
+                Text(
+                    text = "Questions:",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(top = 16.dp)
+                )
+                Text(
+                    text = questions ?: "Brak pytań",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(8.dp)
+                )
+                Button(onClick = { onBack() }) {
+                    Text("Go Back")
                 }
             }
         }
     }
+
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DefaultView(
@@ -190,12 +246,222 @@ suspend fun insertEmptyNoteAndGetId(context: Context, userEmail: String, noteDao
     }
 }
 
+//@Composable
+//fun MarkdownPreview(content: String) {
+//    val context = LocalContext.current
+//
+//    AndroidView(
+//        factory = { ctx ->
+//            TextView(ctx).apply {
+//                // Konfigurujemy Markwon z własnym parserem składni
+//                val markwon = Markwon.builder(ctx)
+//                    .usePlugin(object : AbstractMarkwonPlugin() {
+//                        override fun configureParser(builder: Parser.Builder) {
+//                            // Nie musimy zmieniać parsera Markdown – działa na poziomie tekstu
+//                        }
+//
+//                        override fun configureVisitor(builder: MarkwonVisitor.Builder) {
+//                            builder.on(Text::class.java) { visitor, textNode ->
+//                                val text = textNode.literal
+//                                val regex = Regex("\\{\\{(.*?)\\|(#[0-9a-fA-F]{6})\\}\\}")
+//                                val spannable = SpannableStringBuilder()
+//
+//                                var lastIndex = 0
+//                                regex.findAll(text).forEach { matchResult ->
+//                                    val fullMatch = matchResult.value
+//                                    val displayText = matchResult.groups[1]?.value ?: ""
+//                                    val colorHex = matchResult.groups[2]?.value ?: "#000000"
+//
+//                                    // Dodajemy tekst przed dopasowaniem
+//                                    spannable.append(text.substring(lastIndex, matchResult.range.first))
+//
+//                                    // Tworzymy kolorowy fragment
+//                                    val coloredSpan = SpannableString(displayText)
+//                                    try {
+//                                        val color = android.graphics.Color.parseColor(colorHex)
+//                                        coloredSpan.setSpan(
+//                                            ForegroundColorSpan(color),
+//                                            0,
+//                                            displayText.length,
+//                                            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+//                                        )
+//                                    } catch (e: IllegalArgumentException) {
+//                                        // Ignorujemy błędy w kolorach
+//                                    }
+//                                    spannable.append(coloredSpan)
+//
+//                                    // Ustawiamy nowy indeks
+//                                    lastIndex = matchResult.range.last + 1
+//                                }
+//
+//                                // Dodajemy pozostały tekst
+//                                spannable.append(text.substring(lastIndex))
+//
+//                                visitor.builder().append(spannable)
+//                            }
+//                        }
+//                    })
+//                    .build()
+//
+//                // Renderowanie Markdown
+//                markwon.setMarkdown(this, content)
+//            }
+//        },
+//        update = { view ->
+//            val markwon = Markwon.builder(context).build()
+//            markwon.setMarkdown(view, content)
+//        }
+//    )
+//}
+
+
+@Composable
+fun MarkdownPreview(content: String) {
+    val context = LocalContext.current
+
+    AndroidView(
+        factory = { ctx ->
+            TextView(ctx).apply {
+                Markwon.create(ctx).setMarkdown(this, content)
+            }
+        },
+        update = { view ->
+            Markwon.create(context).setMarkdown(view, content)
+        }
+    )
+}
+
+//@Composable
+//fun NotePreview(
+//    note: NoteModel,
+//    onclick: () -> Unit,
+//    modifier: Modifier = Modifier,
+//) {
+//
+//    Card(modifier.clickable { onclick() }) {
+//        Column(Modifier.padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+//           Text(note.name ?: "" , fontSize = 18.sp, fontWeight = FontWeight.Bold)
+//            //Text(note.content?.substring(0, minOf(headLength, note.content.length)) ?: "")
+//           // MarkdownPreview(note.content?.take(100000000) ?: "") // Ogranicz podgląd do 100 znaków
+//
+//        }
+//    }
+//}
+//@Composable
+//fun NoteContent(
+//    note: NoteModel,
+//    updateNote: (NoteModel) -> Unit,
+//    deleteNote: (NoteModel) -> Unit,
+//    navigateToSummary: () -> Unit,
+//    userEmail: String,
+//    navController: NavHostController,
+//    modifier: Modifier = Modifier
+//) {
+//    val REQUEST_CODE_CAMERA = 1
+//    val context = LocalContext.current
+//
+//    val onCameraClick = {
+//        if (ContextCompat.checkSelfPermission(
+//                context,
+//                Manifest.permission.CAMERA
+//            ) == PackageManager.PERMISSION_GRANTED
+//        ) {
+//            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+//            if (intent.resolveActivity(context.packageManager) != null) {
+//                context.startActivity(intent)
+//            } else {
+//                Toast.makeText(context, "No camera app found", Toast.LENGTH_SHORT).show()
+//            }
+//        } else {
+//            ActivityCompat.requestPermissions(
+//                context as Activity,
+//                arrayOf(Manifest.permission.CAMERA),
+//                REQUEST_CODE_CAMERA
+//            )
+//        }
+//    }
+//
+//
+//
+//    var title by remember { mutableStateOf(note.name) }
+//    var text by remember { mutableStateOf(note.content) }
+//
+//    LazyColumn(
+//        modifier
+//            .fillMaxSize()
+//            .padding(4.dp)
+//    ) {
+//        item {
+//            TextField(
+//                value = title ?: "",
+//                onValueChange = { newValue ->
+//                    title = newValue
+//                    updateNote(NoteModel(note.id, title, text, note.date, userEmail))
+//                },
+//                modifier = Modifier.fillMaxWidth(),
+//                textStyle = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold)
+//            )
+//        }
+//
+//        item {
+//            text?.let {
+//                TextField(
+//                    value = it,
+//                    onValueChange = { newValue ->
+//                        text = newValue
+//                        updateNote(NoteModel(note.id, title, text, note.date, userEmail))
+//                    },
+//                    modifier = Modifier.fillMaxSize()
+//                )
+//            }
+//        }
+//
+//        item {
+//            Button(onClick = {
+//                deleteNote(NoteModel(note.id, title, text, note.date, userEmail))
+//                navController.popBackStack()
+//
+//            }) {
+//                Text("Delete Note")
+//            }
+//        }
+//
+//        item {
+//            Row(
+//                horizontalArrangement = Arrangement.SpaceBetween,
+//                modifier = Modifier.fillMaxWidth()
+//            ) {
+//                Button(onClick = { saveInCalendar(note, context) }) {
+//                    Text("Save in Calendar")
+//                }
+//                Button(onClick = { navigateToSummary() }) {
+//                    Text("Summary")
+//                }
+//            }
+//        }
+//
+//        item {
+//            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+//                FloatingActionButton(
+//                    onClick = onCameraClick,
+//                    modifier = Modifier.padding(16.dp)
+//                ) {
+//                    Icon(
+//                        imageVector = Icons.Default.Camera,
+//                        contentDescription = "Camera Button"
+//                    )
+//                }
+//            }
+//        }
+//    }
+//}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotePreview(
     note: NoteModel,
     onclick: () -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     Card(
         modifier
@@ -223,6 +489,104 @@ fun NotePreview(
     }
 }
 
+//@OptIn(ExperimentalMaterial3Api::class)
+//@Composable
+//fun NoteContent(
+//    note: NoteModel,
+//    updateNote: (NoteModel) -> Unit,
+//    deleteNote: (NoteModel) -> Unit,
+//    navigateToSummary: () -> Unit,
+//    userEmail: String,
+//    navController: NavHostController,
+//    modifier: Modifier = Modifier
+//) {
+//    val REQUEST_CODE_CAMERA = 1
+//    val context = LocalContext.current
+//
+//    val onCameraClick = {
+//        // Obsługa kamery
+//    }
+//
+//    var title by remember { mutableStateOf(note.name) }
+//    var text by remember { mutableStateOf(note.content) }
+//    var showMarkdownPreview by remember { mutableStateOf(false) }
+//
+//    if (showMarkdownPreview) {
+//        text?.let {
+//            MarkdownPreview(it)
+//        } ?: run {
+//
+//            Text("No content to display")
+//        }}
+//        else{
+//    Scaffold(
+//        topBar = {
+//            TopAppBar(
+//                title = { Text(title ?: "Edit Note") },
+//                actions = {
+//                    IconButton(onClick = { navigateToSummary() }) {
+//                        Icon(Icons.Default.Edit, contentDescription = "Summary")
+//                    }
+//                    IconButton(onClick = {
+//                        deleteNote(NoteModel(note.id, title, text, note.date, userEmail))
+//                        navController.popBackStack()
+//                    }) {
+//                        Icon(Icons.Default.Delete, contentDescription = "Delete Note")
+//                    }
+//                }
+//            )
+//        },
+//        floatingActionButton = {
+//            FloatingActionButton(onClick = onCameraClick) {
+//                Icon(Icons.Default.Camera, contentDescription = "Camera")
+//            }
+//        }
+//    ) { paddingValues ->
+//        Column(
+//            modifier
+//                .fillMaxSize()
+//                .padding(paddingValues)
+//                .padding(16.dp)
+//        ) {
+//            OutlinedTextField(
+//                value = title ?: "",
+//                onValueChange = { newValue ->
+//                    title = if (newValue.isBlank()) "Untitled" else newValue
+//                    updateNote(NoteModel(note.id, title, text, note.date, userEmail))
+//                },
+//                label = { Text("Title") },
+//                textStyle = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold),
+//                modifier = Modifier.fillMaxWidth()
+//            )
+//            Spacer(modifier = Modifier.height(16.dp))
+//            text?.let {
+//                OutlinedTextField(
+//                    value = it,
+//                    onValueChange = { newValue ->
+//                        text = newValue
+//                        updateNote(NoteModel(note.id, title, text, note.date, userEmail))
+//                    },
+//                    label = { Text("Content") },
+//                    modifier = Modifier.fillMaxSize(),
+//                    textStyle = TextStyle(fontSize = 16.sp),
+//                    singleLine = false,
+//                    maxLines = Int.MAX_VALUE
+//                )
+//            }
+//            Spacer(modifier = Modifier.height(16.dp))
+//            Button(
+//                onClick = { saveInCalendar(note, context) },
+//                modifier = Modifier.align(Alignment.End)
+//            ) {
+//                Text("Save in Calendar")
+//            }
+//        }
+//        Button(onClick = { showMarkdownPreview = !showMarkdownPreview }) {
+//                    Text(if (showMarkdownPreview) "Edit" else "Preview Markdown")
+//                }}
+//    }
+//}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteContent(
@@ -238,89 +602,89 @@ fun NoteContent(
     val context = LocalContext.current
 
     val onCameraClick = {
-        if (ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.CAMERA
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-            if (intent.resolveActivity(context.packageManager) != null) {
-                context.startActivity(intent)
-            } else {
-                Toast.makeText(context, "No camera app found", Toast.LENGTH_SHORT).show()
-            }
-        } else {
-            ActivityCompat.requestPermissions(
-                context as Activity,
-                arrayOf(Manifest.permission.CAMERA),
-                REQUEST_CODE_CAMERA
-            )
-        }
+        // Obsługa kamery
     }
 
     var title by remember { mutableStateOf(note.name) }
     var text by remember { mutableStateOf(note.content) }
+    var showMarkdownPreview by remember { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(title ?: "Edit Note") },
-                actions = {
-                    IconButton(onClick = { navigateToSummary() }) {
-                        Icon(Icons.Default.Edit, contentDescription = "Summary")
-                    }
-                    IconButton(onClick = {
-                        deleteNote(NoteModel(note.id, title, text, note.date, userEmail))
-                        navController.popBackStack()
-                    }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete Note")
-                    }
-                }
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = onCameraClick) {
-                Icon(Icons.Default.Camera, contentDescription = "Camera")
-            }
+    if (showMarkdownPreview) {
+        text?.let {
+            MarkdownPreview(it)
+        } ?: run {
+            Text("No content to display")
         }
-    ) { paddingValues ->
-        Column(
-            modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
-        ) {
-            OutlinedTextField(
-                value = title ?: "",
-                onValueChange = { newValue ->
-                    title = newValue
-                    updateNote(NoteModel(note.id, title, text, note.date, userEmail))
-                },
-                label = { Text("Title") },
-                textStyle = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold),
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            text?.let {
+    } else {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(title ?: "Edit Note") },
+                    actions = {
+                        IconButton(onClick = { navigateToSummary() }) {
+                            Icon(Icons.Default.Edit, contentDescription = "Summary")
+                        }
+                        IconButton(onClick = {
+                            deleteNote(NoteModel(note.id, title, text, note.date, userEmail))
+                            navController.popBackStack()
+                        }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete Note")
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = { showMarkdownPreview = !showMarkdownPreview },
+                           // modifier = Modifier.align(Alignment.End)
+                        ) {
+                            Text(if (showMarkdownPreview) "Edit" else "Preview Markdown")
+                        }
+                    }
+                )
+            },
+            floatingActionButton = {
+                FloatingActionButton(onClick = onCameraClick) {
+                    Icon(Icons.Default.Camera, contentDescription = "Camera")
+                }
+            }
+        ) { paddingValues ->
+            Column(
+                modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp)
+            ) {
                 OutlinedTextField(
-                    value = it,
+                    value = title ?: "",
                     onValueChange = { newValue ->
-                        text = newValue
+                        title = if (newValue.isBlank()) "Untitled" else newValue
                         updateNote(NoteModel(note.id, title, text, note.date, userEmail))
                     },
-                    label = { Text("Content") },
-                    modifier = Modifier.fillMaxSize(),
-                    textStyle = TextStyle(fontSize = 16.sp),
-                    singleLine = false,
-                    maxLines = Int.MAX_VALUE
+                    label = { Text("Title") },
+                    textStyle = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold),
+                    modifier = Modifier.fillMaxWidth()
                 )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = { saveInCalendar(note, context) },
-                modifier = Modifier.align(Alignment.End)
-            ) {
-                Text("Save in Calendar")
+                Spacer(modifier = Modifier.height(16.dp))
+                text?.let {
+                    OutlinedTextField(
+                        value = it,
+                        onValueChange = { newValue ->
+                            text = newValue
+                            updateNote(NoteModel(note.id, title, text, note.date, userEmail))
+                        },
+                        label = { Text("Content") },
+                        modifier = Modifier.fillMaxSize(),
+                        textStyle = TextStyle(fontSize = 16.sp),
+                        singleLine = false,
+                        maxLines = Int.MAX_VALUE
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = { saveInCalendar(note, context) },
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Save in Calendar")
+                }
+
             }
         }
     }

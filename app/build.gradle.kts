@@ -1,9 +1,7 @@
-import org.jetbrains.kotlin.kapt3.base.Kapt.kapt
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("com.chaquo.python")
+//    id("com.chaquo.python")
     alias(libs.plugins.googleGmsGoogleServices)
     kotlin("kapt")
 }
@@ -59,34 +57,35 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-    flavorDimensions += "pyVersion"
-    productFlavors {
-        create("py38") { dimension = "pyVersion" }
-    }
+//    flavorDimensions += "pyVersion"
+//    productFlavors {
+//        create("py38") { dimension = "pyVersion" }
+//    }
 }
-chaquopy {
-    defaultConfig {
-        version = "3.8"
-        pip {
-            install("torch==1.8.1")
-            install("sentencepiece==0.1.95")
-            install("transformers==4.15.0")
-        }
-    }
-    productFlavors {
-        getByName("py38") { version = "3.8" }
-    }
-    sourceSets {
-        getByName("main") {
-            srcDir("src/main/python")
-        }
-    }
-
-
-}
+//chaquopy {
+//    defaultConfig {
+//        version = "3.8"
+//        pip {
+//            install("torch==1.8.1")
+//            install("sentencepiece==0.1.95")
+//            install("transformers==4.15.0")
+//        }
+//    }
+//    productFlavors {
+//        getByName("py38") { version = "3.8" }
+//    }
+//    sourceSets {
+//        getByName("main") {
+//            srcDir("src/main/python")
+//        }
+//    }
+//
+//
+//}
 
 dependencies {
 
+    implementation("com.squareup.okhttp3:okhttp:4.9.3")
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("androidx.activity:activity-compose:1.9.0")
@@ -103,9 +102,6 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.database)
-//    implementation(libs.firebase.auth)
-//    implementation(libs.firebase.firestore)
-//    implementation(libs.firebase.database)
     implementation("com.google.android.gms:play-services-auth:21.2.0")
     implementation(libs.androidx.benchmark.macro)
     implementation(libs.firebase.crashlytics.buildtools)
@@ -117,6 +113,9 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+    implementation("io.noties.markwon:core:4.6.2")
+    implementation("io.noties.markwon:image:4.6.2")
+    implementation ("io.coil-kt:coil-compose:2.4.0")
 
     implementation("androidx.room:room-runtime:2.6.1")
     "kapt"("androidx.room:room-compiler:2.6.1")
