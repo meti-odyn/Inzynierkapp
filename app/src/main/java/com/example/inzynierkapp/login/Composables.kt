@@ -59,63 +59,14 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import com.example.inzynierkapp.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
-
-
-@Composable
-fun AppContent(auth: FirebaseAuth, onSignedIn: () -> Unit) {
-    var showSplashScreen by remember { mutableStateOf(true) }
-
-    //LaunchedEffect(showSplashScreen) {
-        //delay(2000)
-        //showSplashScreen = false
-    //}
-    AuthOrMainScreen(auth, onSignedIn)
-
-
-//        Crossfade(targetState = showSplashScreen, label = "") { isSplashScreenVisible ->
-//            if (isSplashScreenVisible) {
-//                SplashScreen {
-//                    showSplashScreen = false
-//                }
-//            } else {
-//                AuthOrMainScreen(auth)
-//            }
-//        }
-}
-//}
-@Composable
-fun AuthOrMainScreen(auth: FirebaseAuth, onSignedIn: () -> Unit) {
-    //var user by rememberSaveable { mutableStateOf(auth.currentUser) }
-    if (auth.currentUser == null) {
-        AuthScreen(auth, onSignedIn)
-    } else {
-        MainScreen(
-            user = auth.currentUser!!,
-            onSignOut = {
-                auth.signOut() // Wylogowanie użytkownika z Firebase
-                onSignedIn() // Powrót do ekranu logowania po wylogowaniu
-            },
-            onSignedIn = onSignedIn, // Callback nawigacji do ekranu logowania
-            onNavigateToSection = { section ->
-                // Logika nawigacji do wybranej sekcji, np.:
-                when (section) {
-                    //"Notes" -> navigateToNotesScreen()
-                    //"Summaries" -> navigateToSummariesScreen()
-                    //"Questions" -> navigateToQuestionsScreen()
-                    //"Tests" -> navigateToTestsScreen()
-                    //"App Info" -> navigateToAppInfoScreen()
-                }
-            }
-        )
-    }
-}
-
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -399,9 +350,17 @@ fun PreviewMyScreen() {
 //
 //    }
 //}
+
+fun onSignOut(auth: FirebaseAuth, navController: NavController) {
+    auth.signOut()  // Użycie przekazanej instancji FirebaseAuth
+    navController.navigate("login") {
+        popUpTo("main") { inclusive = true }  // Usunięcie stosu nawigacyjnego
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(user: FirebaseUser, onSignOut: () -> Unit, onSignedIn: () -> Unit, onNavigateToSection: (String) -> Unit) {
+fun MainScreen(user: FirebaseUser, onSignOut: (NavController) -> Unit, onSignedIn: () -> Unit, navController: NavHostController, onNavigateToSection: (String) -> Unit) {
     var userProfile by remember { mutableStateOf<User?>(null) }
 
     // Fetch user profile from Firestore
@@ -432,8 +391,8 @@ fun MainScreen(user: FirebaseUser, onSignOut: () -> Unit, onSignedIn: () -> Unit
                 },
                 actions = {
                     IconButton(onClick = {
-                        onSignOut()
-                        onSignedIn() // Przejście do ekranu logowania po wylogowaniu
+                        onSignOut(navController)
+                        //onSignedIn() // Przejście do ekranu logowania po wylogowaniu
                     }) {
                         Icon(Icons.Default.Logout, contentDescription = "Log Out")
                     }

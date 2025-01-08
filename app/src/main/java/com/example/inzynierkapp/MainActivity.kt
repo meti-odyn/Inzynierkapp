@@ -23,8 +23,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.inzynierkapp.backend.sendRequestToServer
-import com.example.inzynierkapp.login.AppContent
+import com.example.inzynierkapp.login.AuthScreen
 import com.example.inzynierkapp.login.MainScreen
+import com.example.inzynierkapp.login.onSignOut
 import com.example.inzynierkapp.note.NoteDao
 import com.example.inzynierkapp.note.NoteModel
 import com.example.inzynierkapp.notebook.AppDatabase
@@ -104,7 +105,7 @@ class MainActivity : ComponentActivity() {
                     NavHost(navController, startDestination = "login") {
 
                         composable("login") {
-                            AppContent(auth) {
+                            AuthScreen(auth) {
                                navController.navigate("main")
                                 userEmail = auth.currentUser?.email
                                 userEmail?.let { email ->
@@ -115,18 +116,14 @@ class MainActivity : ComponentActivity() {
                         composable("main") {
                             MainScreen(
                                 user = auth.currentUser!!,
-                                onSignOut = {
-                                    auth.signOut()
-                                    navController.navigate("login") {
-                                        popUpTo("main") { inclusive = true }
-                                    }
-                                },
+                                onSignOut = { onSignOut(auth, navController) },
                                 onSignedIn = {
                                     navController.navigate("notebook")
                                 },
                                 onNavigateToSection = { section ->
                                     navController.navigate(section)
-                                }
+                                },
+                                navController = navController
                             )
                         }
                         composable("notebook") {
@@ -203,7 +200,7 @@ class MainActivity : ComponentActivity() {
                             }
                         }
 
-                       
+
                     }
                 }
             }
