@@ -165,6 +165,7 @@ fun SummaryScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DefaultView(
+    navController: NavHostController,
     notesProvider: NoteDao,
     userEmail: String,
     onclick: (Int) -> Unit,

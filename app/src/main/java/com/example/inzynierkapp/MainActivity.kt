@@ -9,18 +9,29 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.inzynierkapp.backend.sendRequestToServer
 import com.example.inzynierkapp.login.AppContent
+import com.example.inzynierkapp.login.MainScreen
+import com.example.inzynierkapp.note.NoteDao
+import com.example.inzynierkapp.note.NoteModel
+import com.example.inzynierkapp.notebook.AppDatabase
 import com.example.inzynierkapp.notebook.DefaultView
 import com.example.inzynierkapp.notebook.NoteContent
 import com.example.inzynierkapp.notebook.SummaryScreen
+import com.example.inzynierkapp.notebook.WaitingScreen
 import com.example.inzynierkapp.ui.theme.InzynierkappTheme
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
@@ -29,19 +40,17 @@ import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
-import com.example.inzynierkapp.note.*
-import com.example.inzynierkapp.notebook.AppDatabase
-import com.example.inzynierkapp.notebook.WaitingScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import java.util.Date
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.google.firebase.firestore.FirebaseFirestore
-import com.example.inzynierkapp.backend.sendRequestToServer
+import java.util.Date
 
+
+const val NOTES_ROUTE = "notes"
 class MainActivity : ComponentActivity() {
     private val auth: FirebaseAuth by lazy { Firebase.auth }
     lateinit var googleSignInClient: GoogleSignInClient
@@ -83,7 +92,6 @@ class MainActivity : ComponentActivity() {
                 fetchNotesFromFirebase(email) // Synchronizuj dane z Firebase
             }
         }
-
         setContent {
             InzynierkappTheme {
                 Surface(
@@ -97,33 +105,37 @@ class MainActivity : ComponentActivity() {
 
                         composable("login") {
                             AppContent(auth) {
-                                navController.navigate("notebook")
+                               navController.navigate("main")
                                 userEmail = auth.currentUser?.email
                                 userEmail?.let { email ->
                                     fetchNotesFromFirebase(email) // Synchronizuj dane po zalogowaniu
                                 }
                             }
                         }
-
+                        composable("main") {
+                            MainScreen(
+                                user = auth.currentUser!!,
+                                onSignOut = {
+                                    auth.signOut()
+                                    navController.navigate("login") {
+                                        popUpTo("main") { inclusive = true }
+                                    }
+                                },
+                                onSignedIn = {
+                                    navController.navigate("notebook")
+                                },
+                                onNavigateToSection = { section ->
+                                    navController.navigate(section)
+                                }
+                            )
+                        }
                         composable("notebook") {
-                            DefaultView(noteDao, userEmail ?: "", { id ->
+                            DefaultView(navController, noteDao, userEmail ?: "", { id ->
                                 selectedNoteId = id
                                 navController.navigate("note")
                             })
                         }
 
-//                        composable("summary") {
-//                            var note by remember { mutableStateOf<NoteModel?>(null) }
-//                            LaunchedEffect(selectedNoteId) {
-//                                note = getNoteByIdAndEmail(selectedNoteId, userEmail!!)
-//                            }
-//                            if (note != null) {
-//                                SummaryScreen(note!!, { navController.popBackStack() })
-//                            } else {
-//                                WaitingScreen(Modifier.fillMaxSize())
-//                            }
-//
-//                        }
                         composable("summary") {
                             var note by remember { mutableStateOf<NoteModel?>(null) }
                             var summary by remember { mutableStateOf("Ładowanie streszczenia...") }
@@ -190,6 +202,8 @@ class MainActivity : ComponentActivity() {
                                 Text("Loading...", Modifier.fillMaxSize(), textAlign = TextAlign.Center)
                             }
                         }
+
+                       
                     }
                 }
             }
