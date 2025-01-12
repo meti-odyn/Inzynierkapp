@@ -59,5 +59,6 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(database: SupportSQLiteDatabase) {
         // SQL command to add a new column 'userEmail' to the 'notes' table
         database.execSQL("ALTER TABLE notes ADD COLUMN userEmail TEXT NOT NULL DEFAULT ''")
+
     }
 }

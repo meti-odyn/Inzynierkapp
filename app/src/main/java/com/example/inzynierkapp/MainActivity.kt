@@ -31,6 +31,8 @@ import com.example.inzynierkapp.note.NoteModel
 import com.example.inzynierkapp.notebook.AppDatabase
 import com.example.inzynierkapp.notebook.DefaultView
 import com.example.inzynierkapp.notebook.NoteContent
+import com.example.inzynierkapp.notebook.SummariesView
+import com.example.inzynierkapp.notebook.SummaryContent
 import com.example.inzynierkapp.notebook.SummaryScreen
 import com.example.inzynierkapp.notebook.WaitingScreen
 import com.example.inzynierkapp.ui.theme.InzynierkappTheme
@@ -138,6 +140,18 @@ class MainActivity : ComponentActivity() {
                                 onBack = { navController.navigate("main") }  // Add the onBack parameter
                             )
                         }
+                        composable("summaries") {
+                            SummariesView(
+                                navController = navController,
+                                summariesProvider = noteDao,
+                                userEmail = userEmail ?: "",
+                                onclick = { id ->
+                                    selectedNoteId = id
+                                    navController.navigate("summaryScreen")
+                                },
+                                onBack = { navController.navigate("main") }  // Add the onBack parameter
+                            )
+                        }
 
                         composable("summary") {
                             var note by remember { mutableStateOf<NoteModel?>(null) }
@@ -198,6 +212,32 @@ class MainActivity : ComponentActivity() {
                                     navigateToSummary = { navController.navigate("summary") },
                                     userEmail = userEmail ?: "",
                                     navController = navController,
+                                    onBack = { navController.navigate("notebook") },
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            } ?: run {
+                                // Show loading or error state if note is null
+                                Text("Loading...", Modifier.fillMaxSize(), textAlign = TextAlign.Center)
+                            }
+                        }
+
+                        composable("summaryScreen") {
+                            var summary by remember { mutableStateOf<NoteModel?>(null) }
+                            LaunchedEffect(selectedNoteId) {
+                                userEmail?.let {
+                                    summary = getNoteByIdAndEmail(selectedNoteId, it)
+                                }
+                            }
+
+                            summary?.let {
+                                SummaryContent(
+                                    note = it,
+                                    updateNote = { updatedNote -> updateNote(updatedNote) },
+                                    deleteNote = { noteToDelete -> deleteNote(noteToDelete) },
+                                    navigateToNote = { navController.navigate("note") },
+                                    userEmail = userEmail ?: "",
+                                    navController = navController,
+                                    onBack = { navController.navigate("summaries") },
                                     modifier = Modifier.fillMaxSize()
                                 )
                             } ?: run {

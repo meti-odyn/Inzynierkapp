@@ -34,6 +34,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -604,6 +605,7 @@ fun NoteContent(
     navigateToSummary: () -> Unit,
     userEmail: String,
     navController: NavHostController,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val REQUEST_CODE_CAMERA = 1
@@ -628,6 +630,11 @@ fun NoteContent(
             topBar = {
                 TopAppBar(
                     title = { Text(title ?: "Edit Note") },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Go Back")
+                        }
+                    },
                     actions = {
                         IconButton(onClick = { navigateToSummary() }) {
                             Icon(Icons.Default.Edit, contentDescription = "Summary")
@@ -638,13 +645,14 @@ fun NoteContent(
                         }) {
                             Icon(Icons.Default.Delete, contentDescription = "Delete Note")
                         }
+                        /*
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(
                             onClick = { showMarkdownPreview = !showMarkdownPreview },
                            // modifier = Modifier.align(Alignment.End)
                         ) {
                             Text(if (showMarkdownPreview) "Edit" else "Preview Markdown")
-                        }
+                        }*/
                     }
                 )
             },
@@ -757,5 +765,195 @@ fun NoConnectionScreen() {
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.error
         )
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SummariesView(
+    navController: NavHostController,
+    summariesProvider: NoteDao,
+    userEmail: String,
+    onclick: (Int) -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val notes = remember { mutableStateOf(listOf<NoteModel>()) }
+
+    LaunchedEffect(userEmail) {
+        summariesProvider.getNotesByEmail(userEmail).collect { notesList ->
+            if (notesList.isEmpty()) {
+                scope.launch {
+                    insertDefaultNoteIfEmpty(context, userEmail, summariesProvider)
+                    summariesProvider.getNotesByEmail(userEmail).collect { notes.value = it }
+                }
+            } else {
+                notes.value = notesList
+            }
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Your Summaries") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Go Back")
+                    }
+                },
+                /*actions = {
+                    IconButton(
+                        onClick = {
+                            scope.launch {
+                                val newNoteId = insertEmptyNoteAndGetId(context, userEmail, summariesProvider)
+                                summariesProvider.getNotesByEmail(userEmail).collect { notes.value = it }
+                                onclick(newNoteId)
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Create new note")
+                    }
+                }*/
+            )
+        }
+    ) { paddingValues ->
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 160.dp),
+            contentPadding = paddingValues,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = modifier.padding(8.dp)
+        ) {
+            items(notes.value.size) { index ->
+                SummaryPreview(notes.value[index], { onclick(notes.value[index].id) })
+            }
+        }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SummaryContent(
+    note: NoteModel,
+    updateNote: (NoteModel) -> Unit,
+    deleteNote: (NoteModel) -> Unit,
+    navigateToNote: () -> Unit,
+    userEmail: String,
+    navController: NavHostController,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val REQUEST_CODE_CAMERA = 1
+    val context = LocalContext.current
+
+    val onCameraClick = {
+        // Obsługa kamery
+    }
+
+    var title by remember { mutableStateOf(note.name) }
+    var text by remember { mutableStateOf(note.content) }
+    var showMarkdownPreview by remember { mutableStateOf(false) }
+
+    if (showMarkdownPreview) {
+        text?.let {
+            MarkdownPreview(it)
+        } ?: run {
+            Text("No content to display")
+        }
+    } else {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(title ?: "Edit Note") },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Go Back")
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = {
+                            deleteNote(NoteModel(note.id, title, text, note.date, userEmail))
+                            navController.popBackStack()
+                        }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete Note")
+                        }
+
+                    }
+                )
+            },
+            floatingActionButton = {
+                FloatingActionButton(onClick = onCameraClick) {
+                    Icon(Icons.Default.Camera, contentDescription = "Camera")
+                }
+            }
+        ) { paddingValues ->
+            Column(
+                modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp)
+            ) {
+                text?.let {
+                    TextField(
+                        value = it,
+                        onValueChange = { newValue ->
+                            text = newValue
+                            updateNote(NoteModel(note.id, title, text, note.date, userEmail))
+                        },
+                        modifier = Modifier.fillMaxSize(),
+                        textStyle = TextStyle(fontSize = 16.sp),
+                        singleLine = false,
+                        maxLines = Int.MAX_VALUE
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = { saveInCalendar(note, context) },
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Save in Calendar")
+                }
+
+            }
+        }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SummaryPreview(
+    note: NoteModel,
+    onclick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier
+            .clickable { onclick() }
+            .fillMaxWidth()
+    ) {
+        Column(
+            Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text(
+                note.name ?: "",
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                note.content ?: "",
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 2,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
+        }
     }
 }

@@ -30,5 +30,13 @@ interface NoteDao {
     @Query("DELETE FROM notes")
     suspend fun clearAll()
 
+    //@Query("SELECT * FROM summaries join notes on summaries.noteId = notes.id WHERE userEmail = :email")
+    //fun getSummaryEmail(email: String): Flow<List<NoteModel>>
+
+
+
+
+
+
 
 }

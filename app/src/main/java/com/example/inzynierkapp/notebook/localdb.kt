@@ -13,7 +13,7 @@ import androidx.room.RoomDatabase
 import com.example.inzynierkapp.login.User
 import java.util.Date
 
-
+/*
 @Entity(tableName = "notes")
 data class NoteRecord(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
@@ -79,7 +79,7 @@ interface QuestionDao {
     @Query("SELECT * FROM questions")
     suspend fun getAllUsers(): List<User>
 }
-
+*/
 
 
 
