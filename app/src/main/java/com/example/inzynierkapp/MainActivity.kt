@@ -127,10 +127,16 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable("notebook") {
-                            DefaultView(navController, noteDao, userEmail ?: "", { id ->
-                                selectedNoteId = id
-                                navController.navigate("note")
-                            })
+                            DefaultView(
+                                navController = navController,
+                                notesProvider = noteDao,
+                                userEmail = userEmail ?: "",
+                                onclick = { id ->
+                                    selectedNoteId = id
+                                    navController.navigate("note")
+                                },
+                                onBack = { navController.navigate("main") }  // Add the onBack parameter
+                            )
                         }
 
                         composable("summary") {

@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -169,6 +170,7 @@ fun DefaultView(
     notesProvider: NoteDao,
     userEmail: String,
     onclick: (Int) -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -192,6 +194,11 @@ fun DefaultView(
         topBar = {
             TopAppBar(
                 title = { Text("Your Notes") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Go Back")
+                    }
+                },
                 actions = {
                     IconButton(
                         onClick = {
