@@ -25,6 +25,8 @@ interface NoteDao {
     @Query("SELECT id FROM notes WHERE userEmail = :email ORDER BY date DESC LIMIT 1")
     fun getNewNoteID(email: String): Int?
 
+    @Query("SELECT COUNT(*) FROM notes WHERE userEmail = :email")
+    fun getNotesNumber(email: String): Int?
     @Delete
     suspend fun delete(note: NoteModel)
     @Query("DELETE FROM notes")

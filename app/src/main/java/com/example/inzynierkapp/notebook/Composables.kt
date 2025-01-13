@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.provider.CalendarContract
 import android.widget.TextView
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,6 +27,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -36,6 +39,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -45,6 +49,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -54,6 +59,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
 import com.example.inzynierkapp.note.NoteDao
 import com.example.inzynierkapp.note.NoteModel
+import com.example.inzynierkapp.ui.theme.GradYellow
+import com.example.inzynierkapp.ui.theme.GradientBackground
 import io.noties.markwon.Markwon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -190,45 +197,49 @@ fun DefaultView(
             }
         }
     }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Your Notes") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Go Back")
-                    }
-                },
-                actions = {
-                    IconButton(
-                        onClick = {
-                            scope.launch {
-                                val newNoteId = insertEmptyNoteAndGetId(context, userEmail, notesProvider)
-                                notesProvider.getNotesByEmail(userEmail).collect { notes.value = it }
-                                onclick(newNoteId)
-                            }
+    GradientBackground {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Your Notes") },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Go Back")
                         }
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = "Create new note")
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent
+                    ),
+                    actions = {
+                        IconButton(
+                            onClick = {
+                                scope.launch {
+                                    val newNoteId = insertEmptyNoteAndGetId(context, userEmail, notesProvider)
+                                    notesProvider.getNotesByEmail(userEmail).collect { notes.value = it }
+                                    onclick(newNoteId)
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = "Create new note")
+                        }
                     }
+                )
+            },
+            containerColor = Color.Transparent
+        ) { paddingValues ->
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 160.dp),
+                contentPadding = paddingValues,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = modifier.padding(8.dp)
+            ) {
+                items(notes.value.size) { index ->
+                    NotePreview(notes.value[index], { onclick(notes.value[index].id) })
                 }
-            )
-        }
-    ) { paddingValues ->
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 160.dp),
-            contentPadding = paddingValues,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = modifier.padding(8.dp)
-        ) {
-            items(notes.value.size) { index ->
-                NotePreview(notes.value[index], { onclick(notes.value[index].id) })
             }
         }
-    }
-}
+}}
 
 suspend fun insertDefaultNoteIfEmpty(context: Context, userEmail: String, noteDao: NoteDao) {
     withContext(Dispatchers.IO) {
@@ -472,7 +483,7 @@ fun NotePreview(
     onclick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    CustomCard(
         modifier
             .clickable { onclick() }
             .fillMaxWidth()
@@ -645,14 +656,14 @@ fun NoteContent(
                         }) {
                             Icon(Icons.Default.Delete, contentDescription = "Delete Note")
                         }
-                        /*
+
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(
                             onClick = { showMarkdownPreview = !showMarkdownPreview },
                            // modifier = Modifier.align(Alignment.End)
                         ) {
-                            Text(if (showMarkdownPreview) "Edit" else "Preview Markdown")
-                        }*/
+                            Text(if (showMarkdownPreview) "Edit" else "Markdown")
+                        }
                     }
                 )
             },
@@ -795,41 +806,45 @@ fun SummariesView(
             }
         }
     }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Your Summaries") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Go Back")
-                    }
-                },
-                /*actions = {
-                    IconButton(
-                        onClick = {
-                            scope.launch {
-                                val newNoteId = insertEmptyNoteAndGetId(context, userEmail, summariesProvider)
-                                summariesProvider.getNotesByEmail(userEmail).collect { notes.value = it }
-                                onclick(newNoteId)
-                            }
+    GradientBackground {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Your Summaries") },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Go Back")
                         }
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = "Create new note")
-                    }
-                }*/
-            )
-        }
-    ) { paddingValues ->
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 160.dp),
-            contentPadding = paddingValues,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = modifier.padding(8.dp)
-        ) {
-            items(notes.value.size) { index ->
-                SummaryPreview(notes.value[index], { onclick(notes.value[index].id) })
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent)
+                    /*actions = {
+                        IconButton(
+                            onClick = {
+                                scope.launch {
+                                    val newNoteId = insertEmptyNoteAndGetId(context, userEmail, summariesProvider)
+                                    summariesProvider.getNotesByEmail(userEmail).collect { notes.value = it }
+                                    onclick(newNoteId)
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = "Create new note")
+                        }
+                    }*/
+                )
+            },
+            containerColor = Color.Transparent
+        ) { paddingValues ->
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 160.dp),
+                contentPadding = paddingValues,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = modifier.padding(8.dp)
+            ) {
+                items(notes.value.size) { index ->
+                    SummaryPreview(notes.value[index], { onclick(notes.value[index].id) })
+                }
             }
         }
     }
@@ -885,7 +900,7 @@ fun SummaryContent(
 
                     }
                 )
-            },
+            },containerColor = Color.Transparent,
             floatingActionButton = {
                 FloatingActionButton(onClick = onCameraClick) {
                     Icon(Icons.Default.Camera, contentDescription = "Camera")
@@ -932,7 +947,7 @@ fun SummaryPreview(
     onclick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    CustomCard(
         modifier
             .clickable { onclick() }
             .fillMaxWidth()
@@ -954,6 +969,148 @@ fun SummaryPreview(
                 maxLines = 2,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
             )
+        }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun QuestionsView(
+    navController: NavHostController,
+    summariesProvider: NoteDao,
+    userEmail: String,
+    onclick: (Int) -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val notes = remember { mutableStateOf(listOf<NoteModel>()) }
+
+    LaunchedEffect(userEmail) {
+        summariesProvider.getNotesByEmail(userEmail).collect { notesList ->
+            if (notesList.isEmpty()) {
+                scope.launch {
+                    insertDefaultNoteIfEmpty(context, userEmail, summariesProvider)
+                    summariesProvider.getNotesByEmail(userEmail).collect { notes.value = it }
+                }
+            } else {
+                notes.value = notesList
+            }
+        }
+    }
+    GradientBackground {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Your Quizes") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Go Back")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent
+                )
+            )
+        },
+        containerColor = Color.Transparent
+
+    ) { paddingValues ->
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 160.dp),
+            contentPadding = paddingValues,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = modifier.padding(8.dp)
+        ) {
+            items(notes.value.size) { index ->
+                QuizPreview(notes.value[index], notes.value.size, { onclick(notes.value[index].id) })
+            }
+        }
+    }
+}}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun QuizPreview(
+    note: NoteModel,
+    notesCount: Int,
+    onclick: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier
+            .clickable { onclick(note.id) }
+            .fillMaxWidth()
+            .border(1.dp, Color.Gray, shape = MaterialTheme.shapes.medium),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+    ) {
+        Column(
+            Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text(
+                note.name ?: "",
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Questions: $notesCount",
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 2,
+            )
+        }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun Quiz() {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text(
+                text = "Quiz name",
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Questions: 5",
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 2,
+            )
+        }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CustomCard(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .border(1.dp, Color.Gray, shape = MaterialTheme.shapes.medium),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+    ) {
+        Column(
+            Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.Start
+        ) {
+            content()
         }
     }
 }

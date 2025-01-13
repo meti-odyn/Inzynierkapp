@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.example.inzynierkapp.R
+import com.example.inzynierkapp.ui.theme.GradientBackground
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
@@ -380,118 +381,122 @@ fun MainScreen(user: FirebaseUser, onSignOut: (NavController) -> Unit, onSignedI
                 // Handle failure
             }
     }
-
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    userProfile?.let {
-                        Text(text = "Hi, ${it.firstName} 👋", style = MaterialTheme.typography.headlineSmall)
-                    }
-                },
-                actions = {
-                    IconButton(onClick = {
-                        onSignOut(navController)
-                        //onSignedIn() // Przejście do ekranu logowania po wylogowaniu
-                    }) {
-                        Icon(Icons.Default.Logout, contentDescription = "Log Out")
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.White,
-                    titleContentColor = Color.Black
+    GradientBackground {
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = {
+                        userProfile?.let {
+                            Text(text = "Hi, ${it.firstName} 👋", style = MaterialTheme.typography.headlineSmall)
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = {
+                            onSignOut(navController)
+                            //onSignedIn() // Przejście do ekranu logowania po wylogowaniu
+                        }) {
+                            Icon(Icons.Default.Logout, contentDescription = "Log Out")
+                        }
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = Color.Transparent,
+                        titleContentColor = Color.Black
+                    )
                 )
-            )
-        },
-        content = { innerPadding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(16.dp)
-            ) {
-                // Sekcja z przyciskami "category"
-                Text(
-                    text = "jaka nauka na dzis, wariacie",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = Color.Black,
-                    modifier = Modifier.padding(bottom = 16.dp)
+            },
+
+            content = { innerPadding ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .padding(16.dp)
+                ) {
+                    // Sekcja z przyciskami "category"
+                    Text(
+                        text = "jaka nauka na dzis, wariacie",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = Color.Black,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+    //                ['#dcd7cb',
+    //                    '#ddd8cc',
+    //                    '#d8d7cc',
+    //                    '#dad5c9',
+    //                    '#dbd6ca',
+    //                    '#d5d7cd',
+    //                    '#d7d6cb',
+    //                    '#d9d4c8',
+    //                    '#ded7c9',
+    //                    '#e0d9cc']
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        CategoryCard(
+                            title = "Notes",
+                            color = Color(0xFFddd8cc),
+                            onClick = { onNavigateToSection("Notebook") },
+                            modifier = Modifier.weight(1f)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        CategoryCard(
+                            title = "Summaries",
+                            color = Color(0xFF84a5ac),
+                            onClick = { onNavigateToSection("Summaries") },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        CategoryCard(
+                            title = "Questions",
+                            color = Color(0xFF9badae),
+                            onClick = { onNavigateToSection("Questions") },
+                            modifier = Modifier.weight(1f)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        CategoryCard(
+                            title = "Tests",
+                            color = Color(0xFFD3D3D3),
+                            onClick = { onNavigateToSection("Tests") },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            },
+            bottomBar = {
+                BottomAppBar(
+                    containerColor = Color.Transparent,
+                    contentColor = Color.Black,
+                    content = {
+                        IconButton(onClick = { onNavigateToSection("Home") }) {
+                            Icon(Icons.Default.Home, contentDescription = "Home")
+                        }
+                        Spacer(Modifier.weight(1f))
+                        IconButton(onClick = { onNavigateToSection("App Info") }) {
+                            Icon(Icons.Default.Info, contentDescription = "App Info") // Dodano App Info
+                        }
+                        Spacer(Modifier.weight(1f))
+                        IconButton(onClick = { onNavigateToSection("Profile") }) {
+                            Icon(Icons.Default.Person, contentDescription = "Profile")
+                        }
+                    }
                 )
-//                ['#dcd7cb',
-//                    '#ddd8cc',
-//                    '#d8d7cc',
-//                    '#dad5c9',
-//                    '#dbd6ca',
-//                    '#d5d7cd',
-//                    '#d7d6cb',
-//                    '#d9d4c8',
-//                    '#ded7c9',
-//                    '#e0d9cc']
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    CategoryCard(
-                        title = "Notes",
-                        color = Color(0xFFddd8cc),
-                        onClick = { onNavigateToSection("Notebook") },
-                        modifier = Modifier.weight(1f)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    CategoryCard(
-                        title = "Summaries",
-                        color = Color(0xFF84a5ac),
-                        onClick = { onNavigateToSection("Summaries") },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    CategoryCard(
-                        title = "Questions",
-                        color = Color(0xFF9badae),
-                        onClick = { onNavigateToSection("Questions") },
-                        modifier = Modifier.weight(1f)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    CategoryCard(
-                        title = "Tests",
-                        color = Color(0xFFD3D3D3),
-                        onClick = { onNavigateToSection("Tests") },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
             }
-        },
-        bottomBar = {
-            BottomAppBar(
-                containerColor = Color.White,
-                contentColor = Color.Black,
-                content = {
-                    IconButton(onClick = { onNavigateToSection("Home") }) {
-                        Icon(Icons.Default.Home, contentDescription = "Home")
-                    }
-                    Spacer(Modifier.weight(1f))
-                    IconButton(onClick = { onNavigateToSection("App Info") }) {
-                        Icon(Icons.Default.Info, contentDescription = "App Info") // Dodano App Info
-                    }
-                    Spacer(Modifier.weight(1f))
-                    IconButton(onClick = { onNavigateToSection("Profile") }) {
-                        Icon(Icons.Default.Person, contentDescription = "Profile")
-                    }
-                }
-            )
-        }
-    )
+        )
+    }
 }
+
 
 @Composable
 fun CategoryCard(title: String, color: Color, onClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -516,6 +521,8 @@ fun CategoryCard(title: String, color: Color, onClick: () -> Unit, modifier: Mod
         }
     }
 }
+
+
 
 
 

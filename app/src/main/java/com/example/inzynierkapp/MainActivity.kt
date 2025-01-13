@@ -31,6 +31,7 @@ import com.example.inzynierkapp.note.NoteModel
 import com.example.inzynierkapp.notebook.AppDatabase
 import com.example.inzynierkapp.notebook.DefaultView
 import com.example.inzynierkapp.notebook.NoteContent
+import com.example.inzynierkapp.notebook.QuestionsView
 import com.example.inzynierkapp.notebook.SummariesView
 import com.example.inzynierkapp.notebook.SummaryContent
 import com.example.inzynierkapp.notebook.SummaryScreen
@@ -142,6 +143,19 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("summaries") {
                             SummariesView(
+                                navController = navController,
+                                summariesProvider = noteDao,
+                                userEmail = userEmail ?: "",
+                                onclick = { id ->
+                                    selectedNoteId = id
+                                    navController.navigate("summaryScreen")
+                                },
+                                onBack = { navController.navigate("main") }  // Add the onBack parameter
+                            )
+                        }
+
+                        composable("questions") {
+                            QuestionsView(
                                 navController = navController,
                                 summariesProvider = noteDao,
                                 userEmail = userEmail ?: "",
