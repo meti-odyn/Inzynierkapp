@@ -91,7 +91,7 @@ class SplashActivity : ComponentActivity(){
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Welcome to *nazwa apki pierdolonej*",
+                    text = "Welcome to Study Buddy",
                     color = Color.Black,
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
