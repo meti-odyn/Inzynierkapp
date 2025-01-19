@@ -411,14 +411,14 @@ fun MainScreen(user: FirebaseUser, onSignOut: (NavController) -> Unit, onSignedI
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
-                        .padding(16.dp)
+                        .padding(32.dp)
                 ) {
                     // Sekcja z przyciskami "category"
                     Text(
-                        text = "jaka nauka na dzis, wariacie",
+                        text = "Select study mode:",
                         style = MaterialTheme.typography.headlineSmall,
                         color = Color.Black,
-                        modifier = Modifier.padding(bottom = 16.dp)
+                        modifier = Modifier.padding(bottom = 64.dp)
                     )
     //                ['#dcd7cb',
     //                    '#ddd8cc',
@@ -437,17 +437,10 @@ fun MainScreen(user: FirebaseUser, onSignOut: (NavController) -> Unit, onSignedI
                             .padding(vertical = 8.dp),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        CategoryCard(
+                        CategoryCard2(
                             title = "Notes",
                             color = Color(0xFFddd8cc),
                             onClick = { onNavigateToSection("Notebook") },
-                            modifier = Modifier.weight(1f)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        CategoryCard(
-                            title = "Summaries",
-                            color = Color(0xFF84a5ac),
-                            onClick = { onNavigateToSection("Summaries") },
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -459,18 +452,19 @@ fun MainScreen(user: FirebaseUser, onSignOut: (NavController) -> Unit, onSignedI
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
                         CategoryCard(
+                            title = "Summaries",
+                            color = Color(0xFF84a5ac),
+                            onClick = { onNavigateToSection("Summaries") },
+                            modifier = Modifier.weight(1f)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        CategoryCard(
                             title = "Questions",
                             color = Color(0xFF9badae),
                             onClick = { onNavigateToSection("Questions") },
                             modifier = Modifier.weight(1f)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        CategoryCard(
-                            title = "Tests",
-                            color = Color(0xFFD3D3D3),
-                            onClick = { onNavigateToSection("Tests") },
-                            modifier = Modifier.weight(1f)
-                        )
+
                     }
                 }
             },
@@ -503,6 +497,30 @@ fun CategoryCard(title: String, color: Color, onClick: () -> Unit, modifier: Mod
     Card(
         modifier = modifier
             .aspectRatio(1f)
+            .clickable(onClick = onClick)
+            .padding(8.dp),
+        colors = CardDefaults.cardColors(containerColor = color),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.Black
+            )
+        }
+    }
+}
+
+@Composable
+fun CategoryCard2(title: String, color: Color, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier
+            .aspectRatio(2f) // Aspect ratio set to 2:1 (width is twice the height)
             .clickable(onClick = onClick)
             .padding(8.dp),
         colors = CardDefaults.cardColors(containerColor = color),
