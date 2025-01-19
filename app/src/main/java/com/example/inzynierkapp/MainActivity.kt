@@ -31,6 +31,7 @@ import com.example.inzynierkapp.note.NoteModel
 import com.example.inzynierkapp.notebook.AppDatabase
 import com.example.inzynierkapp.notebook.DefaultView
 import com.example.inzynierkapp.notebook.NoteContent
+import com.example.inzynierkapp.notebook.QuestionContent
 import com.example.inzynierkapp.notebook.QuestionsView
 import com.example.inzynierkapp.notebook.SummariesView
 import com.example.inzynierkapp.notebook.SummaryContent
@@ -252,6 +253,31 @@ class MainActivity : ComponentActivity() {
                                     userEmail = userEmail ?: "",
                                     navController = navController,
                                     onBack = { navController.navigate("summaries") },
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            } ?: run {
+                                // Show loading or error state if note is null
+                                Text("Loading...", Modifier.fillMaxSize(), textAlign = TextAlign.Center)
+                            }
+                        }
+
+                        composable("questionScreen") {
+                            var summary by remember { mutableStateOf<NoteModel?>(null) }
+                            LaunchedEffect(selectedNoteId) {
+                                userEmail?.let {
+                                    summary = getNoteByIdAndEmail(selectedNoteId, it)
+                                }
+                            }
+
+                            summary?.let {
+                                QuestionContent(
+                                    note = it,
+                                    updateNote = { updatedNote -> updateNote(updatedNote) },
+                                    deleteNote = { noteToDelete -> deleteNote(noteToDelete) },
+                                    navigateToNote = { navController.navigate("note") },
+                                    userEmail = userEmail ?: "",
+                                    navController = navController,
+                                    onBack = { navController.navigate("questions") },
                                     modifier = Modifier.fillMaxSize()
                                 )
                             } ?: run {
