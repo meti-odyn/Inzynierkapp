@@ -28,17 +28,8 @@ interface NoteDao {
     @Query("SELECT COUNT(*) FROM notes WHERE userEmail = :email")
     fun getNotesNumber(email: String): Int?
     @Delete
-    suspend fun delete(note: NoteModel)
+    suspend fun deleteNote(note: NoteModel)
     @Query("DELETE FROM notes")
-    suspend fun clearAll()
-
-    //@Query("SELECT * FROM summaries join notes on summaries.noteId = notes.id WHERE userEmail = :email")
-    //fun getSummaryEmail(email: String): Flow<List<NoteModel>>
-
-
-
-
-
-
+    suspend fun clearAllNotes()
 
 }

@@ -27,8 +27,8 @@ class Converters {
 
 
 @Database(
-    entities = [NoteModel::class /*Summary::class, Questions::class*/],
-    version = 2,
+    entities = [NoteModel::class],
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -47,6 +47,7 @@ abstract class AppDatabase : RoomDatabase() {
                     "note_database"
                 )
                     .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_2_4)
                     .build()
                 INSTANCE = instance
                 instance
@@ -57,8 +58,16 @@ abstract class AppDatabase : RoomDatabase() {
 
 val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(database: SupportSQLiteDatabase) {
-        // SQL command to add a new column 'userEmail' to the 'notes' table
+        // add a new column 'userEmail' to the 'notes' table
         database.execSQL("ALTER TABLE notes ADD COLUMN userEmail TEXT NOT NULL DEFAULT ''")
 
+    }
+}
+
+val MIGRATION_2_4 = object : Migration(2, 4) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        // add new columns 'summary' and 'questions' to the 'notes' table
+        database.execSQL("ALTER TABLE notes ADD COLUMN summary TEXT")
+        database.execSQL("ALTER TABLE notes ADD COLUMN questions TEXT")
     }
 }
