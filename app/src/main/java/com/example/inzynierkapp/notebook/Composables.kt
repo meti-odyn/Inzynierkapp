@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.provider.CalendarContract
 import android.widget.TextView
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -60,7 +59,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
 import com.example.inzynierkapp.note.NoteDao
 import com.example.inzynierkapp.note.NoteModel
-import com.example.inzynierkapp.ui.theme.GradYellow
 import com.example.inzynierkapp.ui.theme.GradientBackground
 import io.noties.markwon.Markwon
 import kotlinx.coroutines.Dispatchers
@@ -129,6 +127,17 @@ import java.util.Date
 //        }
 //    }
 //}
+
+class TextUtility {
+    companion object {
+        fun aiOutputPreview(text: String?, fallback: String = ""): String {
+            if (text == null) return fallback
+            val index = text.indexOf(':')
+            return if (index != -1) text.substring(index + 1).trim() else text
+        }
+    }
+}
+
 @Composable
 fun SummaryScreen(
     note: NoteModel,
@@ -657,7 +666,7 @@ fun NoteContent(
                                 Icon(Icons.Default.Edit, contentDescription = "Summary")
                             }
                             IconButton(onClick = {
-                                deleteNote(NoteModel(note.id, title, text, note.date, userEmail))
+                                deleteNote(NoteModel(note.id, title, text, note.date, userEmail, note.summary, note.questions))
                                 navController.popBackStack()
                             }) {
                                 Icon(Icons.Default.Delete, contentDescription = "Delete Note")
@@ -690,7 +699,7 @@ fun NoteContent(
                         value = title ?: "",
                         onValueChange = { newValue ->
                             title = if (newValue.isBlank()) "Untitled" else newValue
-                            updateNote(NoteModel(note.id, title, text, note.date, userEmail))
+                            updateNote(NoteModel(note.id, title, text, note.date, userEmail, note.summary, note.questions))
                         },
                         label = { Text("Title") },
                         textStyle = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold),
@@ -702,7 +711,7 @@ fun NoteContent(
                             value = it,
                             onValueChange = { newValue ->
                                 text = newValue
-                                updateNote(NoteModel(note.id, title, text, note.date, userEmail))
+                                updateNote(NoteModel(note.id, title, text, note.date, userEmail, note.summary, note.questions))
                             },
                             label = { Text("Content") },
                             modifier = Modifier.fillMaxSize(),
@@ -902,7 +911,7 @@ fun SummaryContent(
                         },
                         actions = {
                             IconButton(onClick = {
-                                deleteNote(NoteModel(note.id, title, text, note.date, userEmail))
+                                deleteNote(NoteModel(note.id, title, text, note.date, userEmail, note.summary, note.questions))
                                 navController.popBackStack()
                             }) {
                                 Icon(Icons.Default.Delete, contentDescription = "Delete Note")
@@ -929,7 +938,7 @@ fun SummaryContent(
                             value = it,
                             onValueChange = { newValue ->
                                 text = newValue
-                                updateNote(NoteModel(note.id, title, text, note.date, userEmail))
+                                updateNote(NoteModel(note.id, title, text, note.date, userEmail, note.summary, note.questions))
                             },
                             modifier = Modifier.fillMaxSize(),
                             textStyle = TextStyle(fontSize = 16.sp),
@@ -978,10 +987,10 @@ fun SummaryPreview(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                note.content ?: "",
+                TextUtility.aiOutputPreview(note.summary, "(no summary)"),
                 style = MaterialTheme.typography.bodyMedium,
-                maxLines = 2,
-                minLines = 2,
+                maxLines = 4,
+                minLines = 4,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
             )
         }
@@ -1073,10 +1082,10 @@ fun QuizPreview(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                note.content ?: "",
+                TextUtility.aiOutputPreview(note.questions, "(no questions)"),
                 style = MaterialTheme.typography.bodyMedium,
-                maxLines = 2,
-                minLines = 2,
+                maxLines = 4,
+                minLines = 4,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
             )
         }
@@ -1221,7 +1230,7 @@ fun QuestionContent(
                         },
                         actions = {
                             IconButton(onClick = {
-                                deleteNote(NoteModel(note.id, title, text, note.date, userEmail))
+                                deleteNote(NoteModel(note.id, title, text, note.date, userEmail, note.summary, note.questions))
                                 navController.popBackStack()
                             }) {
                                 Icon(Icons.Default.Delete, contentDescription = "Delete Note")
@@ -1248,7 +1257,7 @@ fun QuestionContent(
                             value = it,
                             onValueChange = { newValue ->
                                 text = newValue
-                                updateNote(NoteModel(note.id, title, text, note.date, userEmail))
+                                updateNote(NoteModel(note.id, title, text, note.date, userEmail, note.summary, note.questions))
                             },
                             modifier = Modifier.fillMaxSize(),
                             textStyle = TextStyle(fontSize = 16.sp),

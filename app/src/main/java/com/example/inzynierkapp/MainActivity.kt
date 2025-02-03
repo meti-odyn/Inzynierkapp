@@ -184,6 +184,9 @@ class MainActivity : ComponentActivity() {
                                         onResult = { resultSummary, resultQuestions ->
                                             summary = resultSummary
                                             questions = resultQuestions
+                                            it.summary = summary
+                                            it.questions = resultQuestions
+                                            updateNote(it)
                                         },
                                         onError = { error ->
                                             errorMessage = error
@@ -335,7 +338,7 @@ class MainActivity : ComponentActivity() {
 
     private fun deleteNote(note: NoteModel) {
         CoroutineScope(Dispatchers.IO).launch {
-            noteDao.delete(note) // Delete locally
+            noteDao.deleteNote(note) // Delete locally
             userEmail?.let {
                 syncNotesToFirebase(it) // Sync with Firebase
             }
@@ -381,7 +384,9 @@ class MainActivity : ComponentActivity() {
                         name = it["name"] as? String,
                         content = it["content"] as? String,
                         date = (it["date"] as String).let { dateStr -> Date(dateStr) },
-                        userEmail = userEmail
+                        userEmail = userEmail,
+                        summary = it["summary"] as? String?,
+                        questions = it["questions"] as? String?
                     )
                 }
                 saveNotesToLocalDatabase(notes)
@@ -393,7 +398,7 @@ class MainActivity : ComponentActivity() {
 
     private fun saveNotesToLocalDatabase(notes: List<NoteModel>) {
         CoroutineScope(Dispatchers.IO).launch {
-            noteDao.clearAll() // Clear local database
+            noteDao.clearAllNotes() // Clear local database
             notes.forEach { noteDao.addNote(it) } // Save new data
         }
     }
@@ -406,7 +411,7 @@ class MainActivity : ComponentActivity() {
 
     private fun clearLocalDatabase() {
         CoroutineScope(Dispatchers.IO).launch {
-            noteDao.clearAll()
+            noteDao.clearAllNotes()
         }
     }
 
